@@ -19,8 +19,20 @@ Additionally, if you want to debug containers and test endpoints locally before
 deploying, this repo contains git submodule verisons of 
 [Sagemaker TensorFlow Serving Container repo](https://github.com/aws/sagemaker-tensorflow-serving-container/) 
 and [Microsoft's CameraTraps repo](https://github.com/microsoft/CameraTraps) 
-and instructions to help you launch a sagemaker docker container on your 
+and instructions below to help you launch a sagemaker docker container on your 
 comptuer and experiement with running inference on models before you deploy.
+
+## Getting started
+
+Because this repo contains 
+[git submodules](https://www.atlassian.com/git/tutorials/git-submodule), there 
+are a few additional steps after cloning you need to take to retrieve the 
+submodule source code.
+
+## Local development and experimentation
+
+NOTE: this assumes that you have 
+[aws-vault](https://github.com/99designs/aws-vault) installed. 
 
 
 
