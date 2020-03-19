@@ -26,10 +26,61 @@ endpoints for inference.
 
 ## Getting started
 
-Because this repo contains 
-[git submodules](https://www.atlassian.com/git/tutorials/git-submodule), there 
-are a few additional steps after cloning you need to take to retrieve the 
-submodule source code.
+### Cloning the repo
+BEFORE YOU CLONE: Because this repo contains 
+[git submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules), you 
+need to clone recursively in order to pull down the files from the other repos:
+
+```
+$ git clone --recursive https://github.com/tnc-ca-geo/animl-ml/
+```
+
+If you forget to clone recursively, just run the following to retrieve the 
+submodules:
+
+```
+$ git submodule init
+$ git submodule update
+```
+
+### Pulling upstream changes from this repo
+If you simply run ```git pull``, it will recursively fetche submodules changes, 
+however, it does not ***update*** the submodules. To update them you'll need to 
+run:
+
+```
+$ git pull
+$ git submodule update --init --recursive
+```
+
+### Fetching upstream submodule updates
+To pull updates from the remote repos tracked in our submodules, run: 
+```
+$ git submodule update --remote [submodule]
+```
+The ```[submodule]``` part is optional. If you leave that out git will fetch 
+and merge updates from all submodules.
+
+### Hacking on the submodules
+The reason we're using git submodules to pull in these repos is because we need 
+to make some small changes in order to get them running for our purposes. 
+However, as the git docs explain: 
+
+>"when we’ve run the ```git submodule update``` command to fetch changes from the 
+>submodule repositories, Git would get the changes and update the files in the 
+>subdirectory but will leave the sub-repository in what’s called a “detached 
+>HEAD” state. This means that there is no local working branch (like master, 
+>for example) tracking changes. With no working branch tracking changes, that 
+>means even if you commit changes to the submodule, those changes will quite 
+>possibly be lost the next time you run git submodule update. You have to do 
+>some extra steps if you want changes in a submodule to be tracked.
+>
+>In order to set up your submodule to be easier to go in and hack on, you need 
+>to do two things. You need to go into each submodule and check out a branch to 
+>work on. Then you need to tell Git what to do if you have made changes and 
+>then git ```submodule update --remote``` pulls in new work from upstream. The 
+>options are that you can merge them into your local work, or you can try to 
+>rebase your local work on top of the new changes."
 
 ## Local development and experimentation
 
