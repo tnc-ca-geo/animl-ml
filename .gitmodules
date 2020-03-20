@@ -1,6 +1,0 @@
-[submodule "sagemaker-tensorflow-serving-container"]
-	path = sagemaker-tensorflow-serving-container
-	url = https://github.com/aws/sagemaker-tensorflow-serving-container/
-[submodule "CameraTraps"]
-	path = CameraTraps
-	url = https://github.com/microsoft/CameraTraps
