@@ -131,3 +131,6 @@ dmypy.json
 # ignore models
 models/*
 !/models/code
+
+# container log files
+log.txt

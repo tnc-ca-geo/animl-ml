@@ -25,7 +25,10 @@ and pre/postprocessing scripts into it, and submit requests to the local
 endpoints for inference.
 
 ## Get the models
-
+To download and unzip the models, run:
+```
+bash scripts/get-models.sh
+```
 
 ## Local development and experimentation
 
