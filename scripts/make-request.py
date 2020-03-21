@@ -3,16 +3,15 @@
 # already in the animl-images s3 bucket
 import sys
 import os
-import base64
+import argparse
 import requests
 import json
-import argparse
 from PIL import Image
 import numpy as np
 import boto3
 sys.path.append(os.path.abspath(os.path.join('..', 'CameraTraps/')))
-sys.path.append(os.path.abspath(os.path.join('..', 'CameraTraps/visualization')))
-from visualization_utils import render_detection_bounding_boxes
+# sys.path.append(os.path.abspath(os.path.join('..', 'CameraTraps/visualization')))
+from visualization.visualization_utils import render_detection_bounding_boxes
 
 parser = argparse.ArgumentParser()
 parser.add_argument("img_uri")
