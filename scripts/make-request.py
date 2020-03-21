@@ -3,23 +3,22 @@
 # already in the animl-images s3 bucket
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join('..', 'CameraTraps/visualization')))
-sys.path.append(os.path.abspath(os.path.join('..', 'CameraTraps/')))
-
-print(sys.path)
 import base64
 import requests
 import json
 import argparse
 from PIL import Image
 import numpy as np
-from visualization_utils import render_detection_bounding_boxes
 import boto3
+sys.path.append(os.path.abspath(os.path.join('..', 'CameraTraps/')))
+sys.path.append(os.path.abspath(os.path.join('..', 'CameraTraps/visualization')))
+from visualization_utils import render_detection_bounding_boxes
 
 parser = argparse.ArgumentParser()
 parser.add_argument("img_uri")
-args = parser.parse_args()  
+args = parser.parse_args()
 
+BUCKET = "animl-images"
 RENDER_THRESHOLD = 0.8
 MODEL_NAME = 'saved_model_megadetector_v3_tf19'
 
@@ -61,10 +60,13 @@ if __name__ == "__main__":
     # Display results
     for res in results:
         print('result: ', res)
-        # # im = Image.open(res['file'])
-
-        # vis_utils.render_detection_bounding_boxes(
-        #     res['detections'], 
-        #     im, 
-        #     confidence_threshold=RENDER_THRESHOLD)
-        # im.save('output.jpg')
+        # Download image and render bounding box on it
+        s3 = boto3.client('s3')
+        with open('output/annotated_img.jpg', 'wb') as f:
+            s3.download_fileobj(BUCKET, args.img_uri, f)
+            img=Image.open('output/annotated_img.jpg')
+            render_detection_bounding_boxes(
+                res['detections'], 
+                img, 
+                confidence_threshold=RENDER_THRESHOLD)
+            img.save('output/annotated_img.jpg')
