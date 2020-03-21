@@ -24,17 +24,59 @@ and instructions below to help you run the container, load models, dependencies,
 and pre/postprocessing scripts into it, and submit requests to the local 
 endpoints for inference.
 
+## Get the models
+
+
 ## Local development and experimentation
 
 NOTE: this assumes that you have 
-[aws-vault](https://github.com/99designs/aws-vault) installed. 
+[aws-vault](https://github.com/99designs/aws-vault) and 
+[docker](https://docs.docker.com/docker-for-mac/install/)installed. 
 
-After cloning the repo, cd into the ```animl-ml/``` project directory, and
-run the following to clone the necessary external repos:
+### Get the CameraTrap and Sagemaker contianer repos
+After cloning this repo, cd into the ```animl-ml/``` project directory, and 
+run the script to clone the necessary external repos:
 
 ```
-$ bash get-libs.sh
+$ cd animl-ml
+$ bash ./scripts/get-libs.sh
 ```
 
+### Building the container
+To build the docker container, cd into the sagemaker repo and run the build script:
+```
+$ cd ../sagemaker-tensorflow-serving-container/
+$ aws-vault exec `_var_`profile`_var_` -- ./scripts/build.sh --version `_var_`tf version`_var_`1.12 --arch `_var_`architecture`_var_`
+```
 
+For example, to build a container with TensorFlow 1.12 on a CPU architecture 
+(note - you can't do gpu on mac so you're limited to cpu), the comand would look like:
+```
+$ aws-vault exec home -- ../sagemaker-tensorflow-serving-container/scripts/build.sh --version 1.12 --arch cpu
+```
 
+Note - you may need to first export the AWS_DEFAULT_REGION variable manually 
+before running the build script. 
+
+```
+$ export AWS_DEFAULT_REGION=us-west-1
+```
+
+You can double check that the container was built with 
+```
+$ docker images
+```
+
+### Running the container
+To run the container, cd back to the ```animl-ml``` project directory and run 
+the ```start-container.sh``` script
+
+```
+$ cd ../animl-ml
+$ aws-vault exec `_var_`profile`_var_` -- ./scripts/start-container.sh --version `_var_`tf version`_var_`1.12 --arch `_var_`architecture`_var_`
+```
+
+To stop the container, run:
+```
+$ aws-vault exec `_var_`profile`_var_` -- ./scripts/stop-container.sh --version `_var_`tf version`_var_`1.12 --arch `_var_`architecture`_var_`
+```

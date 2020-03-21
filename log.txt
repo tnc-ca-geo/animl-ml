@@ -1,0 +1,166 @@
+INFO:__main__:starting services
+INFO:__main__:tensorflow serving model config: 
+model_config_list: {
+  config: {
+    name: "megadetector",
+    base_path: "/opt/ml/model/megadetector",
+    model_platform: "tensorflow"
+  }
+  config: {
+    name: "half_plus_three",
+    base_path: "/opt/ml/model/half_plus_three",
+    model_platform: "tensorflow"
+  }
+}
+
+
+INFO:__main__:nginx config: 
+load_module modules/ngx_http_js_module.so;
+
+worker_processes auto;
+daemon off;
+pid /tmp/nginx.pid;
+error_log  /dev/stderr error;
+
+worker_rlimit_nofile 4096;
+
+events {
+  worker_connections 2048;
+}
+
+http {
+  include /etc/nginx/mime.types;
+  default_type application/json;
+  access_log /dev/stdout combined;
+  js_include tensorflow-serving.js;
+
+  upstream tfs_upstream {
+    server localhost:9001;
+  }
+
+  upstream gunicorn_upstream {
+    server unix:/tmp/gunicorn.sock fail_timeout=1;
+  }
+
+  server {
+    listen 8080 deferred;
+    client_max_body_size 0;
+    client_body_buffer_size 100m;
+    subrequest_output_buffer_size 100m;
+
+    set $tfs_version 1.12;
+    set $default_tfs_model megadetector;
+
+    location /tfs {
+        rewrite ^/tfs/(.*) /$1  break;
+        proxy_redirect off;
+        proxy_pass_request_headers off;
+        proxy_set_header Content-Type 'application/json';
+        proxy_set_header Accept 'application/json';
+        proxy_pass http://tfs_upstream;
+    }
+
+    location /ping {
+        js_content ping_without_model;
+    }
+
+    location /invocations {
+        proxy_pass http://gunicorn_upstream/invocations;
+    }
+
+    location ~ ^/models/(.*)/invoke {
+        js_content invocations;
+    }
+
+    location /models {
+        proxy_pass http://gunicorn_upstream/models;
+    }
+
+    location / {
+        return 404 '{"error": "Not Found"}';
+    }
+
+    keepalive_timeout 3;
+  }
+}
+
+
+INFO:__main__:tensorflow version info:
+TensorFlow ModelServer: 1.12.0-rc0+dev.sha.87470f0
+TensorFlow Library: 1.12.0
+INFO:__main__:tensorflow serving command: tensorflow_model_server --port=9000 --rest_api_port=9001 --model_config_file=/sagemaker/model-config.cfg --max_num_load_retries=0 
+INFO:__main__:started tensorflow serving (pid: 8)
+INFO:__main__:installing packages from requirements.txt...
+2020-03-20 21:33:05.789568: I tensorflow_serving/model_servers/server_core.cc:461] Adding/updating models.
+2020-03-20 21:33:05.789615: I tensorflow_serving/model_servers/server_core.cc:558]  (Re-)adding model: megadetector
+2020-03-20 21:33:05.789664: I tensorflow_serving/model_servers/server_core.cc:558]  (Re-)adding model: half_plus_three
+2020-03-20 21:33:05.910851: I tensorflow_serving/util/retrier.cc:46] Retrying of Reserving resources for servable: {name: megadetector version: 1} exhausted max_num_retries: 0
+2020-03-20 21:33:05.910904: I tensorflow_serving/core/basic_manager.cc:739] Successfully reserved resources to load servable {name: megadetector version: 1}
+2020-03-20 21:33:05.910928: I tensorflow_serving/core/loader_harness.cc:66] Approving load for servable version {name: megadetector version: 1}
+2020-03-20 21:33:05.910955: I tensorflow_serving/core/loader_harness.cc:74] Loading servable version {name: megadetector version: 1}
+2020-03-20 21:33:05.911239: I external/org_tensorflow/tensorflow/contrib/session_bundle/bundle_shim.cc:363] Attempting to load native SavedModelBundle in bundle-shim from: /opt/ml/model/megadetector/1
+2020-03-20 21:33:05.911371: I external/org_tensorflow/tensorflow/cc/saved_model/reader.cc:31] Reading SavedModel from: /opt/ml/model/megadetector/1
+2020-03-20 21:33:06.025616: I tensorflow_serving/util/retrier.cc:46] Retrying of Reserving resources for servable: {name: half_plus_three version: 123} exhausted max_num_retries: 0
+2020-03-20 21:33:06.025686: I tensorflow_serving/core/basic_manager.cc:739] Successfully reserved resources to load servable {name: half_plus_three version: 123}
+2020-03-20 21:33:06.025703: I tensorflow_serving/core/loader_harness.cc:66] Approving load for servable version {name: half_plus_three version: 123}
+2020-03-20 21:33:06.025753: I tensorflow_serving/core/loader_harness.cc:74] Loading servable version {name: half_plus_three version: 123}
+2020-03-20 21:33:06.028271: I external/org_tensorflow/tensorflow/contrib/session_bundle/bundle_shim.cc:363] Attempting to load native SavedModelBundle in bundle-shim from: /opt/ml/model/half_plus_three/00000123
+2020-03-20 21:33:06.028322: I external/org_tensorflow/tensorflow/cc/saved_model/reader.cc:31] Reading SavedModel from: /opt/ml/model/half_plus_three/00000123
+2020-03-20 21:33:06.034609: I external/org_tensorflow/tensorflow/cc/saved_model/reader.cc:54] Reading meta graph with tags { serve }
+2020-03-20 21:33:06.035384: I external/org_tensorflow/tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+2020-03-20 21:33:06.060250: I external/org_tensorflow/tensorflow/cc/saved_model/loader.cc:162] Restoring SavedModel bundle.
+2020-03-20 21:33:06.082501: I external/org_tensorflow/tensorflow/cc/saved_model/loader.cc:138] Running MainOp with key legacy_init_op on SavedModel bundle.
+2020-03-20 21:33:06.083971: I external/org_tensorflow/tensorflow/cc/saved_model/loader.cc:259] SavedModel load for tags { serve }; Status: success. Took 55636 microseconds.
+2020-03-20 21:33:06.085291: I tensorflow_serving/servables/tensorflow/saved_model_warmup.cc:83] No warmup data file found at /opt/ml/model/half_plus_three/00000123/assets.extra/tf_serving_warmup_requests
+2020-03-20 21:33:06.116751: I tensorflow_serving/util/retrier.cc:46] Retrying of Loading servable: {name: half_plus_three version: 123} exhausted max_num_retries: 0
+2020-03-20 21:33:06.116893: I tensorflow_serving/core/loader_harness.cc:86] Successfully loaded servable version {name: half_plus_three version: 123}
+Collecting boto3 (from -r /opt/ml/model/code/requirements.txt (line 1))
+2020-03-20 21:33:06.632873: I external/org_tensorflow/tensorflow/cc/saved_model/reader.cc:54] Reading meta graph with tags { serve }
+2020-03-20 21:33:06.874169: I external/org_tensorflow/tensorflow/cc/saved_model/loader.cc:162] Restoring SavedModel bundle.
+2020-03-20 21:33:06.875891: I external/org_tensorflow/tensorflow/cc/saved_model/loader.cc:172] The specified SavedModel has no variables; no checkpoints were restored. File does not exist: /opt/ml/model/megadetector/1/variables/variables.index
+2020-03-20 21:33:06.875937: I external/org_tensorflow/tensorflow/cc/saved_model/loader.cc:138] Running MainOp with key legacy_init_op on SavedModel bundle.
+2020-03-20 21:33:06.875958: I external/org_tensorflow/tensorflow/cc/saved_model/loader.cc:259] SavedModel load for tags { serve }; Status: success. Took 964584 microseconds.
+2020-03-20 21:33:06.876328: I tensorflow_serving/servables/tensorflow/saved_model_warmup.cc:83] No warmup data file found at /opt/ml/model/megadetector/1/assets.extra/tf_serving_warmup_requests
+2020-03-20 21:33:06.882872: I tensorflow_serving/util/retrier.cc:46] Retrying of Loading servable: {name: megadetector version: 1} exhausted max_num_retries: 0
+2020-03-20 21:33:06.882915: I tensorflow_serving/core/loader_harness.cc:86] Successfully loaded servable version {name: megadetector version: 1}
+2020-03-20 21:33:06.885577: I tensorflow_serving/model_servers/server.cc:286] Running gRPC ModelServer at 0.0.0.0:9000 ...
+[warn] getaddrinfo: address family for nodename not supported
+[evhttp_server.cc : 237] RAW: Entering the event loop ...
+2020-03-20 21:33:06.887241: I tensorflow_serving/model_servers/server.cc:302] Exporting HTTP/REST API at:localhost:9001 ...
+  Downloading https://files.pythonhosted.org/packages/69/2b/d0c034aed3c250d8b57a1eb2ecbeaf803028913ea38e3c580e8840f0e999/boto3-1.12.26-py2.py3-none-any.whl (128kB)
+Collecting pillow (from -r /opt/ml/model/code/requirements.txt (line 2))
+  Downloading https://files.pythonhosted.org/packages/c6/42/fdaf9b53942b103462db3d843c5bc3eb660f9b2e58419ebc99ed87d93dd2/Pillow-7.0.0-cp35-cp35m-manylinux1_x86_64.whl (2.1MB)
+Collecting numpy (from -r /opt/ml/model/code/requirements.txt (line 3))
+  Downloading https://files.pythonhosted.org/packages/ff/18/c0b937e2f84095ae230196899e56d1d7d76c8e8424fb235ed7e5bb6d68af/numpy-1.18.2-cp35-cp35m-manylinux1_x86_64.whl (20.0MB)
+Collecting botocore<1.16.0,>=1.15.26 (from boto3->-r /opt/ml/model/code/requirements.txt (line 1))
+  Downloading https://files.pythonhosted.org/packages/44/54/a3dd8faf823dea86a5036cf95183fb4593b429caebaf885da820efe1b84c/botocore-1.15.26-py2.py3-none-any.whl (6.0MB)
+Collecting s3transfer<0.4.0,>=0.3.0 (from boto3->-r /opt/ml/model/code/requirements.txt (line 1))
+  Downloading https://files.pythonhosted.org/packages/69/79/e6afb3d8b0b4e96cefbdc690f741d7dd24547ff1f94240c997a26fa908d3/s3transfer-0.3.3-py2.py3-none-any.whl (69kB)
+Collecting jmespath<1.0.0,>=0.7.1 (from boto3->-r /opt/ml/model/code/requirements.txt (line 1))
+  Downloading https://files.pythonhosted.org/packages/a3/43/1e939e1fcd87b827fe192d0c9fc25b48c5b3368902bfb913de7754b0dc03/jmespath-0.9.5-py2.py3-none-any.whl
+Collecting docutils<0.16,>=0.10 (from botocore<1.16.0,>=1.15.26->boto3->-r /opt/ml/model/code/requirements.txt (line 1))
+  Downloading https://files.pythonhosted.org/packages/22/cd/a6aa959dca619918ccb55023b4cb151949c64d4d5d55b3f4ffd7eee0c6e8/docutils-0.15.2-py3-none-any.whl (547kB)
+Collecting python-dateutil<3.0.0,>=2.1 (from botocore<1.16.0,>=1.15.26->boto3->-r /opt/ml/model/code/requirements.txt (line 1))
+  Downloading https://files.pythonhosted.org/packages/d4/70/d60450c3dd48ef87586924207ae8907090de0b306af2bce5d134d78615cb/python_dateutil-2.8.1-py2.py3-none-any.whl (227kB)
+Requirement already satisfied (use --upgrade to upgrade): urllib3<1.26,>=1.20; python_version != "3.4" in /usr/local/lib/python3.5/dist-packages (from botocore<1.16.0,>=1.15.26->boto3->-r /opt/ml/model/code/requirements.txt (line 1))
+Requirement already satisfied (use --upgrade to upgrade): six>=1.5 in /usr/local/lib/python3.5/dist-packages (from python-dateutil<3.0.0,>=2.1->botocore<1.16.0,>=1.15.26->boto3->-r /opt/ml/model/code/requirements.txt (line 1))
+Installing collected packages: docutils, jmespath, python-dateutil, botocore, s3transfer, boto3, pillow, numpy
+Successfully installed boto3-1.12.26 botocore-1.15.26 docutils-0.15.2 jmespath-0.9.5 numpy-1.18.2 pillow-7.0.0 python-dateutil-2.8.1 s3transfer-0.3.3
+You are using pip version 8.1.1, however version 20.0.2 is available.
+You should consider upgrading via the 'pip install --upgrade pip' command.
+INFO:__main__:gunicorn command: gunicorn -b unix:/tmp/gunicorn.sock -k gevent --chdir /sagemaker --pythonpath /opt/ml/model/code -e TFS_GRPC_PORT=9000 -e SAGEMAKER_MULTI_MODEL=False python_service:app
+INFO:__main__:gunicorn version info:
+gunicorn (version 20.0.4)
+INFO:__main__:started gunicorn (pid: 112)
+[2020-03-20 21:33:17 +0000] [112] [INFO] Starting gunicorn 20.0.4
+INFO:__main__:gunicorn server is ready!
+[2020-03-20 21:33:17 +0000] [112] [INFO] Listening at: unix:/tmp/gunicorn.sock (112)
+[2020-03-20 21:33:17 +0000] [112] [INFO] Using worker: gevent
+[2020-03-20 21:33:17 +0000] [116] [INFO] Booting worker with pid: 116
+INFO:__main__:nginx version info:
+nginx version: nginx/1.16.1
+built by gcc 5.4.0 20160609 (Ubuntu 5.4.0-6ubuntu1~16.04.11) 
+built with OpenSSL 1.0.2g  1 Mar 2016
+TLS SNI support enabled
+configure arguments: --prefix=/etc/nginx --sbin-path=/usr/sbin/nginx --modules-path=/usr/lib/nginx/modules --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error.log --http-log-path=/var/log/nginx/access.log --pid-path=/var/run/nginx.pid --lock-path=/var/run/nginx.lock --http-client-body-temp-path=/var/cache/nginx/client_temp --http-proxy-temp-path=/var/cache/nginx/proxy_temp --http-fastcgi-temp-path=/var/cache/nginx/fastcgi_temp --http-uwsgi-temp-path=/var/cache/nginx/uwsgi_temp --http-scgi-temp-path=/var/cache/nginx/scgi_temp --user=nginx --group=nginx --with-compat --with-file-aio --with-threads --with-http_addition_module --with-http_auth_request_module --with-http_dav_module --with-http_flv_module --with-http_gunzip_module --with-http_gzip_static_module --with-http_mp4_module --with-http_random_index_module --with-http_realip_module --with-http_secure_link_module --with-http_slice_module --with-http_ssl_module --with-http_stub_status_module --with-http_sub_module --with-http_v2_module --with-mail --with-mail_ssl_module --with-stream --with-stream_realip_module --with-stream_ssl_module --with-stream_ssl_preread_module --with-cc-opt='-g -O2 -fPIE -fstack-protector-strong -Wformat -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -fPIC' --with-ld-opt='-Wl,-Bsymbolic-functions -fPIE -pie -Wl,-z,relro -Wl,-z,now -Wl,--as-needed -pie'
+INFO:__main__:started nginx (pid: 117)
