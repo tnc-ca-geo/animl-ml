@@ -24,17 +24,20 @@ and instructions below to help you run the container, load models, dependencies,
 and pre/postprocessing scripts into it, and submit requests to the local 
 endpoints for inference.
 
-## Get the models
-To download and unzip the models, run:
-```
-bash scripts/get-models.sh
-```
-
 ## Local development and experimentation
 
 NOTE: this assumes that you have 
-[aws-vault](https://github.com/99designs/aws-vault) and 
-[docker](https://docs.docker.com/docker-for-mac/install/)installed. 
+[aws-vault](https://github.com/99designs/aws-vault),  
+[docker](https://docs.docker.com/docker-for-mac/install/) and 
+[virtualenv](https://virtualenv.pypa.io/en/latest/) installed.
+
+### Clone the repo and set up the virtual env
+```
+$ mkdir animl-ml
+$ git clone https://github.com/tnc-ca-geo/animl-ml.git
+$ virtualenv env -p python3
+$ pip install -r requirements.txt
+```
 
 ### Get the CameraTrap and Sagemaker contianer repos
 After cloning this repo, cd into the ```animl-ml/``` project directory, and 
@@ -45,15 +48,22 @@ $ cd animl-ml
 $ bash ./scripts/get-libs.sh
 ```
 
+## Get the models
+To download and unzip the models, run the following from 
+the same ```animl-ml``` directory:
+```
+bash scripts/get-models.sh
+```
+
 ### Building the container
 To build the docker container, cd into the sagemaker repo and run the build script:
 ```
 $ cd ../sagemaker-tensorflow-serving-container/
-$ aws-vault exec `_var_`profile`_var_` -- ./scripts/build.sh --version `_var_`tf version`_var_`1.12 --arch `_var_`architecture`_var_`
+$ aws-vault exec <vault_profile> -- ./scripts/build.sh --version <tf_version> --arch <architecture_type>
 ```
 
 For example, to build a container with TensorFlow 1.12 on a CPU architecture 
-(note - you can't do gpu on mac so you're limited to cpu), the comand would look like:
+(note - you can't run gpu architecture on mac), the comand would look like:
 ```
 $ aws-vault exec home -- ../sagemaker-tensorflow-serving-container/scripts/build.sh --version 1.12 --arch cpu
 ```
@@ -76,10 +86,25 @@ the ```start-container.sh``` script
 
 ```
 $ cd ../animl-ml
-$ aws-vault exec `_var_`profile`_var_` -- ./scripts/start-container.sh --version `_var_`tf version`_var_`1.12 --arch `_var_`architecture`_var_`
+$ aws-vault exec <vault_profile> -- ./scripts/start-container.sh --version <tf_version> --arch <architecture_type>
+```
+
+Alternatively, you can also start the container in interactive mode with:
+```
+$ aws-vault exec <vault_profile> -- ./scripts/start-container-interactive.sh --version <tf_version> --arch <architecture_type>
 ```
 
 To stop the container, run:
 ```
-$ aws-vault exec `_var_`profile`_var_` -- ./scripts/stop-container.sh --version `_var_`tf version`_var_`1.12 --arch `_var_`architecture`_var_`
+$ aws-vault exec <vault_profile> -- ./scripts/stop-container.sh --version <tf_version> --arch <architecture_type>
+```
+
+### Run inference on the local endpoint
+To test the endpoint, pass the ```make-request.py``` script a string representing 
+the key of an image that's already been uploaded to the ```animl-images``` S3 bucket. 
+The preprocessing script in ```inference.py``` will download the image, process 
+it, and submit it to the model for inference.
+
+```
+$ aws-vault exec <vault_profile> -- python scripts/make-request.py  <image_key>
 ```

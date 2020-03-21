@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Start a local docker container.
+# Start a local docker container in interactive mode
 
 set -euo pipefail
 
@@ -27,4 +27,5 @@ $docker_command run \
     -e "AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY \
     -e "AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN \
     -e "AWS_SECURITY_TOKEN="$AWS_SECURITY_TOKEN \
-    $repository:$full_version-$device serve > log.txt 2>&1 & \
+    -it $repository:$full_version-$device bin/bash
+
