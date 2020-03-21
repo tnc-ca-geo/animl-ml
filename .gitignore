@@ -1,7 +1,3 @@
-# ignore models
-models/
-!models/code/
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -131,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# ignore models
+models/*
+!/models/code
