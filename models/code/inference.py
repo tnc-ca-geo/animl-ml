@@ -31,7 +31,8 @@ def input_handler(data, context):
         # Download image from s3
         s3 = boto3.client('s3')
         with open('img.jpg', 'wb') as f:
-            s3.download_fileobj(BUCKET, d, f)
+            key = d.strip('"')
+            s3.download_fileobj(BUCKET, key, f)
             img=Image.open('img.jpg')
             np_img=np.asarray(img, np.uint8)
             np_img_expanded = np.expand_dims(np_img, axis=0)

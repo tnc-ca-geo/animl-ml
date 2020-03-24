@@ -134,3 +134,4 @@ models/*
 
 # container log files
 log.txt
+.DS_Store
