@@ -24,6 +24,14 @@ and instructions below to help you run the container, load models, dependencies,
 and pre/postprocessing scripts into it, and submit requests to the local 
 endpoints for inference.
 
+## Deploy a model endpoint using AWS Sagemaker Notebook
+The ```notebooks/``` directory contains notebooks that can be pulled into an 
+AWS Sagemaker notebook instance and used as is or repurposed for deploying 
+endpoints into production and testing them. We currently have a notebook 
+instance running, which can be found here: 
+
+https://animl.notebook.us-west-1.sagemaker.aws/lab
+
 ## Local development and experimentation
 
 NOTE: this assumes that you have 
