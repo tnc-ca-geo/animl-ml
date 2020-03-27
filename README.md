@@ -1,6 +1,12 @@
 # Animl ML
 Machine Learning resources for camera trap data processing
 
+## Related repos
+- Animl base program      http://github.com/tnc-ca-geo/animl-base
+- Animl lambda function   http://github.com/tnc-ca-geo/animl-lambda
+- Animl desktop app       https://github.com/tnc-ca-geo/animl-desktop
+- Animl cloud platform    https://github.com/tnc-ca-geo/animl
+
 ## Intro
 
 We are using AWS Sagemaker to host our model endpoints. The initial models
