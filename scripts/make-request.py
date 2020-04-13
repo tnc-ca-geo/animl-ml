@@ -36,7 +36,7 @@ if __name__ == "__main__":
     )
 
     # Read predictions
-    # print(json.loads(json_response.text))
+    print(json.loads(json_response.text))
     predictions = json.loads(json_response.text)['predictions']
 
     results = []

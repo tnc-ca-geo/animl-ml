@@ -23,21 +23,22 @@ def input_handler(data, context):
         (dict): a JSON-serializable dict that contains request body and headers
     """
 
-    log.info('preprocessing request...')
+    log.info(' preprocessing request...')
 
     if context.request_content_type == 'application/json':
         d = data.read().decode('utf-8')
-        log.info('request recieved: {}'.format(d))
+        log.info(' request recieved: {}'.format(d))
         # Download image from s3
         s3 = boto3.client('s3')
         with open('img.jpg', 'wb') as f:
             key = d.strip('"')
-            log.info('attempting to download object from: {} with key {}'.format(BUCKET, key))
+            log.info(' attempting to download object from: {} with key {}'.format(BUCKET, key))
             s3.download_fileobj(BUCKET, key, f)
             img=Image.open('img.jpg')
             np_img=np.asarray(img, np.uint8)
             np_img_expanded = np.expand_dims(np_img, axis=0)
-            log.info('download successful. Image shape: {}'.format(np_img_expanded.shape))
+            log.info(' download successful. Image shape: {}'.format(np_img_expanded.shape))
+            log.info(' making prediction...')
             inp = json.dumps({'signature_name': 'serving_default', 'instances': np_img_expanded.tolist()})
             return inp
 
@@ -55,7 +56,7 @@ def output_handler(data, context):
     Returns:
         (bytes, string): data to return to client, response content type
     """
-    print('print - output_handler firing')
+    log.info(' output_handler firing')
     if data.status_code != 200:
         raise ValueError(data.content.decode('utf-8'))
 
