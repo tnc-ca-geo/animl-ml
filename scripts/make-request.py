@@ -1,6 +1,3 @@
-# Run inference on a localy hosted enpont
-# The first argument must be a key for an image 
-# already in the animl-images s3 bucket
 import sys
 import os
 import argparse
@@ -8,7 +5,6 @@ import requests
 import json
 from PIL import Image
 import numpy as np
-# import boto3
 sys.path.append(os.path.abspath(os.path.join("..", "CameraTraps/")))
 # sys.path.append(os.path.abspath(os.path.join("..", "CameraTraps/visualization")))
 from visualization.visualization_utils import render_detection_bounding_boxes
