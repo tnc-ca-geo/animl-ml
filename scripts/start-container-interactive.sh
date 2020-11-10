@@ -27,5 +27,5 @@ $docker_command run \
     -e "AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY \
     -e "AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN \
     -e "AWS_SECURITY_TOKEN="$AWS_SECURITY_TOKEN \
-    -it $repository:$full_version-$device bin/bash
+    -it tensorflow-inference:$full_version-$device bin/bash
 

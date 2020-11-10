@@ -13,30 +13,46 @@ sagemakerContainerCommit=fc9013c5cc6cb521585b89aa2c984cc93864f445
 
 # get cameratrap repo
 if [ -d "$parentPath"/"$cameraTrapDir" ]; then
-  echo -e "Directory "$parentPath"/"$cameraTrapDir" already exits, skipping ...\n"
+  echo -e "Directory "$parentPath"/"$cameraTrapDir" already exits, pulling down latest commits ...\n"
+  pullCmdRun=$(
+    cd "$parentPath/$cameraTrapDir" 
+    git checkout master 
+    git pull
+  )
+  echo -e "${pullCmdRun}\n\n"
 else
   echo -e "No dir found for "$parentPath"/"$cameraTrapDir", cloning remote ...\n"
   cloneCmd="git clone $cameraTrapRepo $parentPath/$cameraTrapDir"
   cloneCmdRun=$(
-    $cloneCmd &&
-    cd "$parentPath/$cameraTrapDir"
-    git checkout "$cameraTrapCommit"
-    git checkout -b pinned-commit
+    $cloneCmd
+    # uncomment below to create a branch at specific commit
+    # $cloneCmd &&
+    # cd "$parentPath/$cameraTrapDir"
+    # git checkout "$cameraTrapCommit"
+    # git checkout -b pinned-commit
   )
   echo -e "${cloneCmdRun}\n\n"
 fi
 
 # get sagemaker container repo
 if [ -d "$parentPath"/"$sagemakerContainerDir" ]; then
-  echo -e "Directory "$parentPath"/"$sagemakerContainerDir" already exits, skipping ...\n"
+  echo -e "Directory "$parentPath"/"$sagemakerContainerDir" already exits, pulling down latest commits ...\n"
+    pullCmdRun=$(
+      cd "$parentPath/$sagemakerContainerDir" 
+      git checkout master 
+      git pull
+    )
+  echo -e "${pullCmdRun}\n\n"
 else
   echo -e "No dir found for "$parentPath"/"$sagemakerContainerDir", cloning remote ...\n"
   cloneCmd="git clone $sagemakerContainerRepo $parentPath/$sagemakerContainerDir"
   cloneCmdRun=$(
-    $cloneCmd &&
-    cd "$parentPath/$sagemakerContainerDir"
-    git checkout "$sagemakerContainerCommit"
-    git checkout -b pinned-commit
+    $cloneCmd
+    # uncomment below to create a branch at specific commit
+    # $cloneCmd &&
+    # cd "$parentPath/$sagemakerContainerDir"
+    # git checkout "$sagemakerContainerCommit"
+    # git checkout -b pinned-commit
   )
   echo -e "${cloneCmdRun}\n\n"
 fi

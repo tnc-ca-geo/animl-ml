@@ -6,7 +6,7 @@ import boto3
 import numpy as np
 from PIL import Image
 
-BUCKET = 'animl-images'
+BUCKET = 'animl-test-images'
 log = logging.getLogger(__name__)
 Context = namedtuple('Context',
                      'model_name, model_version, method, rest_uri, grpc_uri, '

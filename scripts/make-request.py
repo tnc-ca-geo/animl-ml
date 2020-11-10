@@ -17,7 +17,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("img_uri")
 args = parser.parse_args()
 
-BUCKET = "animl-images"
+BUCKET = "animl-test-images"
 RENDER_THRESHOLD = 0.8
 MODEL_NAME = 'saved_model_megadetector_v3_tf19'
 
