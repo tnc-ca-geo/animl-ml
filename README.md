@@ -71,7 +71,11 @@ $ bash ./scripts/get-models.sh
 NOTE: If you're on a mac, make sure there aren't any stray ```.DS_store``` 
 files in ```animl-ml/models/```. The sagemaker-tensorflow-serving-container 
 build scripts will mistake them for models and try to load them into the 
-container. 
+container. A quick way to recursively remove all ```.DS_store``` files is to 
+cd to the ```animl-ml/models/``` directory and run: 
+```
+$ find . -name '*.DS_Store' -type f -delete
+```
 
 ### Building the container
 And finally, to build the docker container in which the model will be run 
@@ -84,7 +88,7 @@ $ aws-vault exec <vault_profile> -- bash ./scripts/build-container.sh
 To run the container, run the ```start-container.sh``` script
 
 ```
-$ aws-vault exec <vault_profile> -- bash ./scripts/start-container.sh --version 1.13 --arch cpu
+$ aws-vault exec <vault_profile> -- bash ./scripts/start-container.sh
 ```
 
 Check that it was successful and the container is running with:
@@ -94,22 +98,19 @@ $ docker ps
 
 Alternatively, you can also start the container in interactive mode with:
 ```
-$ aws-vault exec <vault_profile> -- bash ./scripts/start-container-interactive.sh --version 1.13 --arch cpu
+$ aws-vault exec <vault_profile> -- bash ./scripts/start-container-interactive.sh
 ```
 
 To stop the container, run:
 ```
-$ aws-vault exec <vault_profile> -- bash ./scripts/stop-container.sh --version 1.13 --arch cpu
+$ aws-vault exec <vault_profile> -- bash ./scripts/stop-container.sh
 ```
 
 All output from the container will be piped into ```log.txt```.
 
 ### Run inference on the local endpoint
-To test the endpoint, pass the ```make-request.py``` script a string representing 
-the key of an image that's already been uploaded to the ```animl-test-images``` S3 bucket. 
-The preprocessing script in ```inference.py``` will download the image, process 
-it, and submit it to the model for inference.
-
+To test the endpoint, pass the ```make-request.py``` script a path to an local 
+image file:
 ```
-$ aws-vault exec <vault_profile> -- python scripts/make-request.py  <image_key>
+$ aws-vault exec <vault_profile> -- python ./scripts/make-request.py input/sample-img.jpg
 ```

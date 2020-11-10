@@ -4,19 +4,11 @@
 
 set -euo pipefail
 
-source ../sagemaker-tensorflow-serving-container/scripts/shared.sh
-
-parse_std_args "$@"
-
-if [ "$arch" == 'gpu' ]; then
-    docker_command='nvidia-docker'
-else
-    docker_command='docker'
-fi
-
-
 MODEL_DIR="$(cd "models" > /dev/null && pwd)"
-$docker_command run \
+full_version=1.13.0
+device=cpu
+
+docker run \
     -v "$MODEL_DIR":/opt/ml/model:ro \
     -p 8080:8080 \
     -e "SAGEMAKER_TFS_DEFAULT_MODEL_NAME=megadetector" \

@@ -4,8 +4,7 @@
 
 set -euo pipefail
 
-source ../sagemaker-tensorflow-serving-container/scripts/shared.sh
-
-parse_std_args "$@"
+full_version=1.13.0
+device=cpu
 
 docker kill $(docker ps -q --filter ancestor=tensorflow-inference:$full_version-$device)
