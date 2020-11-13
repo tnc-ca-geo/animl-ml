@@ -2,10 +2,37 @@
 #
 # Download megadetector model files
 
+# TODO: store zipped up MIRA models in TensorFlow ProtoBuf (.pb) format, 
+# and download them & create any necessary folder structure.
+# After running get-models.sh, the models/ directory should look like: 
+
+# models
+#   ├─ megadetector
+#       └─ megadetector
+#           └─ 4
+#               └─ saved_model.pb
+#   ├─ mira
+#       └─ mira-large
+#           └─ 1
+#               └─ saved_model.pb
+#                   └─ variables
+#                       └─ variables.data-00000-of-00001
+#                       └─ variables.index
+#       └─ mira-small
+#           └─ 1
+#               └─ saved_model.pb
+#                   └─ variables
+#                       └─ variables.data-00000-of-00001
+#                       └─ variables.index
+#       └─ code
+#           └─ inference.py
+#           └─ requirements.txt
+
+
 # Megadetector v4.1.0
 md4Url=https://lilablobssc.blob.core.windows.net/models/camera_traps/megadetector/md_v4.1.0/md_v4.1.0_saved_model.zip
 mdDir=megadetector
-modelPath="$PWD/models"
+modelPath="$PWD/models/megadetector"
 
 if [ -d "$modelPath"/"$mdDir" ]; then
   echo -e "Directory "$modelPath"/"$mdDir" already exits, skipping ...\n"

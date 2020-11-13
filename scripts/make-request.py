@@ -14,7 +14,7 @@ parser.add_argument("img_uri")
 args = parser.parse_args()
 URL = "http://localhost:8080/invocations"
 RENDER_THRESHOLD = 0.8
-MODEL_NAME = "megadetector"
+MODEL_NAME = "megadetector" # TODO: implement local MIRA testing as well
 
 if __name__ == "__main__":
     print("Detecting objects in: ", args.img_uri)
@@ -35,26 +35,30 @@ if __name__ == "__main__":
         print(json.loads(r.text))
         predictions = json.loads(r.text)["predictions"]
 
-        # results = []
-        # for i, image_path in enumerate(image_paths):
-        #     detections = []
-        #     for box, clss, score in zip(predictions[i]["detection_boxes"], 
-        #                                 predictions[i]["detection_classes"], 
-        #                                 predictions[i]["detection_scores"]):
-        #         if score >= RENDER_THRESHOLD:
-        #             detections.append({
-        #                 "category": str(int(clss)),
-        #                 "conf": score,
-        #                 "bbox": [box[1], box[0], box[3] - box[1], box[2] - box[0]]
-        #             })
-        #     results.append({
-        #         "file": image_path,
-        #         "detections": detections
-        #     })
-        
-        # # Display results
-        # for res in results:
-        #     print("result: ", res)
+        results = []
+        image_paths = [args.img_uri]
+        for i, image_path in enumerate(image_paths):
+            detections = []
+            for box, clss, score in zip(predictions[i]["detection_boxes"], 
+                                        predictions[i]["detection_classes"], 
+                                        predictions[i]["detection_scores"]):
+                if score >= RENDER_THRESHOLD:
+                    detections.append({
+                        "category": str(int(clss)),
+                        "conf": score,
+                        "bbox": box
+                        # to change from [ymin, xmin, ymax, xmax] to [xmin, ymin, w, h] :
+                        # "bbox": [box[1], box[0], box[3] - box[1], box[2] - box[0]]
+                    })
+            results.append({
+                "file": image_path,
+                "detections": detections
+            })
+
+        # Display results
+        for res in results:
+            print("result: ", res)
+            
         #     # Download image and render bounding box on it
         #     s3 = boto3.client("s3")
         #     with open("output/annotated_img.jpg", "wb") as f:

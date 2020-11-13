@@ -128,9 +128,12 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# pb files
+*.pb
+
 # ignore models
-models/*
-!/models/code
+models/*/*
+!models/*/code
 
 # container log files
 log.txt

@@ -2,9 +2,11 @@
 #
 # Start a local docker container in interactive mode
 
+# TODO: pass in argument to specify which model to load
+
 set -euo pipefail
 
-MODEL_DIR="$(cd "models" > /dev/null && pwd)"
+MODEL_DIR="$(cd "models/megadetector" > /dev/null && pwd)"
 full_version=1.13.0
 device=cpu
 

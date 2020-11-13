@@ -1,13 +1,14 @@
 # Animl ML
 Machine Learning resources for camera trap data processing
 
-## Related repos
+## `Related repos`
+- Animl Fontend           http://github.com/tnc-ca-geo/animl-frontend
+- Animl API               http://github.com/tnc-ca-geo/animl-api
 - Animl base program      http://github.com/tnc-ca-geo/animl-base
-- Animl lambda function   http://github.com/tnc-ca-geo/animl-lambda
+- Animl ingest function   http://github.com/tnc-ca-geo/animl-ingest
 - Animl desktop app       https://github.com/tnc-ca-geo/animl-desktop
-- Animl cloud platform    https://github.com/tnc-ca-geo/animl
 
-## Intro
+## `Intro`
 
 We are using AWS Sagemaker to host our model endpoints. The initial models
 we will run inference on are 
@@ -19,7 +20,7 @@ labeled images from Santa Cruz Island.
 When you deploy model endpoints to Sagemaker, AWS starts an EC2 instance and 
 starts a docker container with in it optimized for serving particular model's 
 architecture. You can find Phython Nodetbooks to facilitate the deployment of 
-models in the notebooks/ directory of this repo.
+models in the ```notebooks/``` directory of this repo.
 
 Additionally, if you want to launch a TensorFlow serving container locally 
 to debug and test endpoints locally before deploying, this repo contains a 
@@ -30,7 +31,7 @@ and instructions below to help you run the container, load models, dependencies,
 and pre/postprocessing scripts into it, and submit requests to the local 
 endpoints for inference.
 
-## Deploy a model endpoint using AWS Sagemaker Notebook
+## `Deploy a model endpoint using AWS Sagemaker Notebook`
 The ```notebooks/``` directory contains notebooks that can be pulled into an 
 AWS Sagemaker notebook instance and used as is or repurposed for deploying 
 endpoints into production and testing them. We currently have a notebook 
@@ -38,7 +39,7 @@ instance running, which can be found here:
 
 https://animl.notebook.us-west-1.sagemaker.aws/lab
 
-## Local development and experimentation
+## `Local development and experimentation`
 
 NOTE: this assumes that you have 
 [aws-vault](https://github.com/99designs/aws-vault),  
