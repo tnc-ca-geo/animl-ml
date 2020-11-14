@@ -1,11 +1,8 @@
 #!/bin/bash
 #
 # Download megadetector model files
-
-# TODO: store zipped up MIRA models in TensorFlow ProtoBuf (.pb) format, 
-# and download them & create any necessary folder structure.
-# After running get-models.sh, the models/ directory should look like: 
-
+# After running get-models.sh, the models/ directory should look like:
+#
 # models
 #   ├─ megadetector
 #       └─ megadetector
@@ -15,35 +12,58 @@
 #       └─ mira-large
 #           └─ 1
 #               └─ saved_model.pb
-#                   └─ variables
-#                       └─ variables.data-00000-of-00001
-#                       └─ variables.index
+#               └─ variables
+#                   └─ variables.data-00000-of-00001
+#                   └─ variables.index
 #       └─ mira-small
 #           └─ 1
 #               └─ saved_model.pb
-#                   └─ variables
-#                       └─ variables.data-00000-of-00001
-#                       └─ variables.index
+#               └─ variables
+#                   └─ variables.data-00000-of-00001
+#                   └─ variables.index
 #       └─ code
 #           └─ inference.py
 #           └─ requirements.txt
 
+bucket="s3://animl-models"
+modelPath="$PWD/models"
 
-# Megadetector v4.1.0
-md4Url=https://lilablobssc.blob.core.windows.net/models/camera_traps/megadetector/md_v4.1.0/md_v4.1.0_saved_model.zip
-mdDir=megadetector
-modelPath="$PWD/models/megadetector"
+# Microsoft Megadetector v4
+megadetectorDir="megadetector"
+megadetectorModel="megadetector"
+megadetectorZipFile="megadetector.zip"
+megadetectorPbPath="$modelPath/$megadetectorDir/megadetector/4/saved_model.pb"
 
-if [ -d "$modelPath"/"$mdDir" ]; then
-  echo -e "Directory "$modelPath"/"$mdDir" already exits, skipping ...\n"
+# MIRA
+miraDir="mira"
+miraLargeModel="mira-large"
+miraLargeZipFile="mira-large.zip"
+miraLargePbPath="$modelPath/$miraDir/mira-large/1/saved_model.pb"
+
+
+echo -e "Getting Animl models..."
+
+if [[ -f $megadetectorPbPath ]]; then
+  echo -e "$megadetectorModel model file already exits, skipping"
 else 
-  echo -e "Downloading and unzipping megadetector v4..."
-  cd "$modelPath" && \
-  mkdir "$mdDir" && cd $mdDir
-  curl -sS "$md4Url" > md4.zip && \
-  unzip md4.zip && rm md4.zip && \
-  mv saved_model 4
+  echo -e "Downloading and unzipping Megadetector v4..."
+  cd $modelPath/$megadetectorDir
+  aws s3 cp $bucket/$megadetectorZipFile ./ && \
+  unzip $megadetectorZipFile && rm $megadetectorZipFile && \
   cd ..
-  find . -name '*.DS_Store' -type f -delete
+  find . -name "*.DS_Store" -type f -delete
+  echo -e "Success"
+fi 
+
+if [[ -f $miraLargePbPath ]]; then
+  echo -e "$miraLargeModel model file already exits, skipping"
+else   echo -e "Downloading and unzipping MIRA-large..."
+  cd $modelPath/$miraDir
+  aws s3 cp $bucket/$miraLargeZipFile ./ && \
+  unzip $miraLargeZipFile && rm $miraLargeZipFile && \
+  cd ..
+  find . -name "*.DS_Store" -type f -delete
   echo -e "Success"
 fi
+
+echo -e "Done"

@@ -67,7 +67,7 @@ $ bash ./scripts/get-libs.sh
 To download and unzip the models, run the following from 
 the same ```animl-ml``` directory:
 ```
-$ bash ./scripts/get-models.sh
+$ aws-vault exec <vault_profile> -- bash ./scripts/get-models.sh
 ```
 NOTE: If you're on a mac, make sure there aren't any stray ```.DS_store``` 
 files in ```animl-ml/models/```. The sagemaker-tensorflow-serving-container 
