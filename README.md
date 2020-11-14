@@ -1,4 +1,4 @@
-# Animl ML
+# Animl ML :rat:
 Machine Learning resources for camera trap data processing
 
 ## `Related repos`
@@ -53,7 +53,7 @@ $ git clone https://github.com/tnc-ca-geo/animl-ml.git
 $ virtualenv env -p python3
 $ source env/bin/activate
 $ cd animl-ml
-$ pip install -r requirements.txt
+$ pip3 install -r requirements.txt
 ```
 
 ### Get the CameraTrap and Sagemaker contianer repos
