@@ -64,8 +64,9 @@ $ bash ./scripts/get-libs.sh
 ```
 
 ### Get the models
-To download and unzip the models, run the following from 
-the same ```animl-ml``` directory:
+The models we use in this app are all available in Tensorflow ProtoBuf format 
+at s3://animl-models. To download and unzip them, run the following from the 
+same ```animl-ml``` project directory:
 ```
 $ aws-vault exec <vault_profile> -- bash ./scripts/get-models.sh
 ```
