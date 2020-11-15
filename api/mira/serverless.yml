@@ -1,0 +1,77 @@
+service: mira
+app: animl
+org: nathanielrindlaub
+
+frameworkVersion: '1'
+
+package:
+  exclude:
+    - node_modules/**
+    - .idea/**
+    - .requirements/**
+    - env/**
+    - README.md
+    - package.json
+    - package-lock.json
+    - requirements.txt
+
+provider:
+  name: aws
+  runtime: python3.8
+  stage: ${opt:stage, 'dev'}
+  region: us-west-1
+  profile: serverless-admin
+
+# you can add statements to the Lambda function's IAM Role here
+#  iamRoleStatements:
+#    - Effect: "Allow"
+#      Action:
+#        - "s3:ListBucket"
+#      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
+#    - Effect: "Allow"
+#      Action:
+#        - "s3:PutObject"
+#      Resource:
+#        Fn::Join:
+#          - ""
+#          - - "arn:aws:s3:::"
+#            - "Ref" : "ServerlessDeploymentBucket"
+#            - "/*"
+
+
+# TODO: when we implement a queuing system, look into Lambda "destinations"
+# for async invocation:
+# https://www.serverless.com/framework/docs/providers/aws/guide/functions#asynchronous-invocation
+# https://docs.aws.amazon.com/lambda/latest/dg/invocation-async.html#invocation-async-destinations
+
+functions:
+  MiraClassify:
+    handler: handler.classify
+    name: MiraClassifyLambdaFunction-${opt:stage, self:provider.stage, 'dev'}
+    description: Run inference on images with Mira models 
+    role: arn:aws:iam::719729260530:role/animl-lambda-role # different role? should this be defined in serverless?
+    events:
+     - http:
+         path: classify
+         method: post
+         cors: true 
+
+# you can add CloudFormation resource templates here
+#resources:
+#  Resources:
+#    NewResource:
+#      Type: AWS::S3::Bucket
+#      Properties:
+#        BucketName: my-new-bucket
+#  Outputs:
+#     NewOutput:
+#       Description: "Description for the output"
+#       Value: "Some output value"
+
+custom:
+  pythonRequirements:
+    dockerizePip: true
+
+plugins:
+  - serverless-python-requirements
+  - serverless-offline

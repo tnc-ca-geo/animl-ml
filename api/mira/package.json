@@ -1,0 +1,16 @@
+{
+  "name": "mira",
+  "description": "",
+  "version": "0.1.0",
+  "scripts": {
+    "start": "serverless offline --useSeparateProcesses",
+    "deploy-dev": "sls deploy --stage dev",
+    "deploy-prod": "sls deploy --stage prod",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "serverless-offline": "^6.8.0",
+    "serverless-python-requirements": "^5.1.0"
+  }
+}
