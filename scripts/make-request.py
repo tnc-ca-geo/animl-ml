@@ -28,8 +28,12 @@ if __name__ == "__main__":
     with open(args.img_uri, "rb") as fd:
 
         # Post request
-        r = requests.post(URL, data=fd, headers=headers)
+        # TODO: I think we should pass in fd in "files" param, instead of "data"
+        # for mulitpart-encoded files?
+        # https://requests.readthedocs.io/en/master/user/quickstart/#passing-parameters-in-urls
+        r = requests.post(URL, data=fd, headers=headers) 
 
+        # https://requests.readthedocs.io/en/master/user/quickstart/#passing-parameters-in-urls
         # Read predictions
         print("response: ", r.status_code)
         print(json.loads(r.text))

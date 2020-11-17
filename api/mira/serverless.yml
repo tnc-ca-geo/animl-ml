@@ -14,6 +14,8 @@ package:
     - package.json
     - package-lock.json
     - requirements.txt
+    - .test/**
+
 
 provider:
   name: aws
@@ -21,6 +23,12 @@ provider:
   stage: ${opt:stage, 'dev'}
   region: us-west-1
   profile: serverless-admin
+  apiGateway:
+    # tells API Gateway to treat multipart/form-data requests ase binary type 
+    # and parse it into base64 format
+    binaryMediaTypes:
+      - 'multipart/form-data'
+    #  - '*/*' # or maybe wildcard?
 
 # you can add statements to the Lambda function's IAM Role here
 #  iamRoleStatements:
