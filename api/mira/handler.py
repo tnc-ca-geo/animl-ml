@@ -29,8 +29,8 @@ def run_inference(img, bbox, models=MODELS):
     Get class predictions from MIRA models
     """
 
-    # Megadetector bbox is [ymin, xmin, ymax, xmax] in relative values
-    # convert to tuple (xmin, ymin, xmax, ymax) in pixel values 
+    # Megadetector bbox is [ymin, xmin, ymax, xmax], in relative values
+    # convert to tuple (xmin, ymin, xmax, ymax), in pixel values 
     W, H = img.size
     if bbox:
         boxpx = (int(bbox[1]*W), int(bbox[0]*H), int(bbox[3]*W), int(bbox[2]*H))
@@ -74,7 +74,8 @@ def parse_multipart_req(body, content_type):
 
     multipart_data = decoder.MultipartDecoder(body, content_type)
     for part in multipart_data.parts:
-        content_disposition = part.headers.get(b"Content-Disposition", b"").decode("utf-8")
+        content_disposition = part.headers.get(b"Content-Disposition", b"")
+        content_disposition = content_disposition.decode("utf-8")
         search_field = PATTERN.search(content_disposition)
         if search_field:                    
             if search_field.group(0) == "image":
@@ -88,7 +89,7 @@ def parse_multipart_req(body, content_type):
             elif search_field.group(0) == "bbox":
                 req["bbox"] = json.loads(part.content.decode("utf-8"))
         else:
-            print("Bad field name in form-data")
+            logger.debug("Bad field name in form-data")
     return req
 
 def classify(event, context):
@@ -97,17 +98,17 @@ def classify(event, context):
 
     # validate request
     assert event.get("httpMethod") == "POST"
-    try :
+    try:
         event["body"] = base64.b64decode(event["body"])
-    except :
+    except:
          return {
             "statusCode": 400,
             "body": json.dumps(res)
         }
 
-    # # check that the content uploaded is not too big
-    # # request.content_length is the length of the total payload
-    # # also will not proceed if cannot find content_length, hence in the else we exceed the max limit
+    # TODO: check that the content uploaded is not too big
+    # request.content_length is the length of the total payload
+    # also will not proceed if cannot find content_length, hence in the else we exceed the max limit
     # content_length = event.content_length
     # print("content_length: {}".format(content_length))
 
@@ -120,7 +121,7 @@ def classify(event, context):
         elif req["url"]:
             img = Image.open(req["url"])
         else:
-            print("No image or image URL present in form-data")
+            logger.debug("No image or image URL present in form-data")
         bbox = req["bbox"] if req["bbox"] else None
         res.append(run_inference(img, bbox))
 

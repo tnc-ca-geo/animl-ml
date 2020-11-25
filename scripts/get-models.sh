@@ -1,5 +1,5 @@
 #!/bin/bash
-#
+
 # Download megadetector model files
 # After running get-models.sh, the models/ directory should look like:
 #
