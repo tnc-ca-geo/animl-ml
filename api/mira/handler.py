@@ -8,21 +8,21 @@ from PIL import Image
 from log_cfg import logger
 import boto3
 
+
 PATTERN = re.compile('(?<=form-data; name=").*?(?=")')
 MODELS = [
   {
-			"model": "large",
-			"endpoint_name": "tensorflow-inference-2020-11-14-16-33-30-130",
+			"endpoint_name": "mira-large",
 			"classes": ["fox", "skunk", "empty"]
   },
   {
-    "model": "small",
-    "endpoint_name": "tensorflow-inference-2020-11-14-21-37-17-458",
+    "endpoint_name": "mira-small",
     "classes": ["rodent", "empty"]
   }
 ]
 
 client = boto3.client("runtime.sagemaker")
+
 
 def run_inference(img, bbox, models=MODELS):
     """
@@ -42,7 +42,7 @@ def run_inference(img, bbox, models=MODELS):
 
     output = {}
     for model in models:  # TODO: invoke async
-        output[model["model"]] = model
+        output[model["endpoint_name"]] = model
         predictions = {}
         # invoke endpoint
         print("invoking mira-{}".format(model))
@@ -58,9 +58,10 @@ def run_inference(img, bbox, models=MODELS):
         print("predictions: {}".format(pred))
         for i in range(len(pred)):
             predictions[model["classes"][i]] = float(pred[i])
-        output[model["model"]]["predictions"] = predictions
+        output[model["endpoint_name"]]["predictions"] = predictions
     print("model output: {} ".format(output))
     return output
+
 
 def parse_multipart_req(body, content_type):
     """
@@ -91,6 +92,7 @@ def parse_multipart_req(body, content_type):
         else:
             logger.debug("Bad field name in form-data")
     return req
+
 
 def classify(event, context):
     logger.debug("event: {}".format(event))

@@ -29,6 +29,5 @@ $ npm run deploy-prod
 ### Test
 ```
 # activate virtual env
-$ npm start
 $ python test/test_api.py sample-img.jpg
 ```
