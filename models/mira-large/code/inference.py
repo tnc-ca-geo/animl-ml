@@ -7,22 +7,12 @@ import numpy as np
 from PIL import Image
 
 log = logging.getLogger(__name__)
-Context = namedtuple("Context",
-                     "model_name, model_version, method, rest_uri, grpc_uri, "
-                     "custom_attributes, request_content_type, accept_header")
 INPUT_SHAPE = (256, 256)
 INSIZE = (1, 1, 256, 256)
 
 def input_handler(data, context):
     """ 
     Pre-process request input before it is sent to TensorFlow Serving REST API
-
-    Args:
-        data (obj): the request image (cropped), in format bytes object
-        context (Context): an object containing request and configuration details
-
-    Returns:
-        (dict): a JSON-serializable dict that contains request body and headers
     """
 
     log.info(" preprocessing request...")
@@ -78,14 +68,8 @@ def input_handler(data, context):
 
 
 def output_handler(data, context):
-    """Post-process TensorFlow Serving output before it is returned to the client.
-
-    Args:
-        data (obj): the TensorFlow serving response
-        context (Context): an object containing request and configuration details
-
-    Returns:
-        (bytes, string): data to return to client, response content type
+    """
+    Post-process TensorFlow Serving output before it is returned to the client.
     """
     log.info(" output_handler firing")
     if data.status_code != 200:
