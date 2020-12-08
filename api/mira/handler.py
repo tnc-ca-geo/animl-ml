@@ -28,9 +28,11 @@ def run_inference(img, bbox, models=MODELS):
     """
     Get class predictions from MIRA models
     """
+    print("running inference")
 
     # Megadetector bbox is [ymin, xmin, ymax, xmax], in relative values
     # convert to tuple (xmin, ymin, xmax, ymax), in pixel values 
+    img = Image.open(img)
     W, H = img.size
     if bbox:
         boxpx = (int(bbox[1]*W), int(bbox[0]*H), int(bbox[3]*W), int(bbox[2]*H))
@@ -71,7 +73,7 @@ def parse_multipart_req(body, content_type):
 
     # convert to bytes if need
     if type(body) is str:
-        body = bytes(body,"utf-8")
+        body = bytes(body, "utf-8")
 
     multipart_data = decoder.MultipartDecoder(body, content_type)
     for part in multipart_data.parts:
@@ -103,7 +105,8 @@ def classify(event, context):
     try:
         event["body"] = base64.b64decode(event["body"])
     except:
-         return {
+        logger.debug("failed to decode image")
+        return {
             "statusCode": 400,
             "body": json.dumps(res)
         }
@@ -114,18 +117,19 @@ def classify(event, context):
     # content_length = event.content_length
     # print("content_length: {}".format(content_length))
 
-    content_type = event.get("headers", {"Content-Type": ""}).get("Content-Type")
+    headers = event.get("headers", {"Content-Type": ""})
+    content_type = headers.get("Content-Type")
+    print("content type: {}".format(content_type))
     if "multipart/form-data" in content_type:
         req = parse_multipart_req(event["body"], content_type)
-        img = None
-        if req["image"]:
-            img = Image.open(req["image"])
-        elif req["url"]:
-            img = Image.open(req["url"])
-        else:
+        img = req.get("image") or req.get("url")
+        if not img:
             logger.debug("No image or image URL present in form-data")
-        bbox = req["bbox"] if req["bbox"] else None
+            # TODO: return 400?
+        bbox = req.get("bbox")
         res.append(run_inference(img, bbox))
+    else:
+        logger.debug("Content type is not multipart/form-data")
 
     return {
             "headers": {

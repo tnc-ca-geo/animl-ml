@@ -24,8 +24,8 @@ provider:
   region: us-west-1
   profile: serverless-admin
   apiGateway:
-    # tells API Gateway to treat multipart/form-data requests ase binary type 
-    # and parse it into base64 format
+    # tells API Gateway to treat multipart/form-data requests as binary type 
+    # and parse request body into base64 format
     binaryMediaTypes:
       - 'multipart/form-data'
     #  - '*/*' # or maybe wildcard?
