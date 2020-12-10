@@ -66,7 +66,6 @@ def request_inference(img, img_url, bbox, local=False):
 
 
 if __name__ == "__main__":
-    print("args: {}".format(args))
     if args.img or args.img_url:  
         r = request_inference(args.img, args.img_url, args.bbox, args.local)
         handle_response(r)

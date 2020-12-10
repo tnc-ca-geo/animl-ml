@@ -54,7 +54,7 @@ provider:
 
 functions:
   MiraClassify:
-    handler: handler.classify
+    handler: handler.handler
     name: MiraClassifyLambdaFunction-${opt:stage, self:provider.stage, 'dev'}
     description: Run inference on images with Mira models 
     role: arn:aws:iam::719729260530:role/animl-lambda-role # different role? should this be defined in serverless?
