@@ -18,11 +18,47 @@ predictions in the response.
 
 
 ## `Usage`
+Please send inference requests in a mulitpart form. You may submit images 
+either in full as binary files, or, if you'd like to run inference against an 
+image hosted somewhere online, you may submit just its URL.
+
+You can also optionally pass in an object bounding box, which the API will use 
+to crop the image before sumitting it to the models for inference.
+
+The possible parts of the form are:
+- image: a binary image file
+- url: a url pointing to an image online
+- bbox: a string represntation of a bounding box in the format: 
+  '[ymin, xmin, ymax, xmax]', where values are relative and the 
+  origin in the upper-left
 
 ### Invocation example (Python)
+See example below, or check out example useage in 
+```animl-ml/notebooks/test-inference-pipeline.ipynb``` or 
+```animl-ml/api/mira/test/test_api.py``. 
 
-### Invocation example (Node)
+```python
+import requests
+from requests_toolbelt.multipart.encoder import MultipartEncoder
 
+API_URL = 'https://2xuiw1fidh.execute-api.us-west-1.amazonaws.com/dev/classify'
+IMG = '/path/to/local/image.jpg'
+# IMG_URL = 'http://www.example.com/image.jpg'
+BBOX = [0.536007, 0.434649, 0.635773, 0.543599]
+
+fields = {}
+if IMG_URL:
+    fields['url'] = IMG_URL
+if IMG:
+    fields['image'] = (IMG, open(IMG, 'rb'), 'image/jpeg')
+if BBOX:
+    fields['bbox'] = json.dumps(BBOX)
+
+multipart_data = MultipartEncoder(fields=fields)
+r = requests.post(API_URL,
+                  data = multipart_data,
+                  headers = {'Content-Type': multipart_data.content_type})
+```
 
 ## `Development`
 
