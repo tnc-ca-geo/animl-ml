@@ -1,7 +1,7 @@
 # MIRA API
 API for real-time MIRA species classification
 
-## `Intro`
+## `Intro` :fox_face:
 MIRA is a pair of species classification models trained on camera trap data from 
 the Channel Islands in California. The models were developed by 
 [Nanolayers](http://www.nanolayers.com/). The "mira-small" model is designed to 
@@ -17,7 +17,7 @@ predictions in the response.
 - Mira worker         https://github.com/fullmetalfelix/Mira-Worker
 
 
-## `Usage`
+## `Usage` :rat:
 Please send inference requests in a mulitpart form. You may submit images 
 either in full as binary files, or, if you'd like to run inference against an 
 image hosted somewhere online, you may submit just its URL.
@@ -26,31 +26,31 @@ You can also optionally pass in an object bounding box, which the API will use
 to crop the image before sumitting it to the models for inference.
 
 The possible parts of the form are:
-- image: a binary image file
-- url: a url pointing to an image online
-- bbox: a string represntation of a bounding box in the format: 
+- **image**: a binary image file
+- **url**: a url pointing to an image online
+- **bbox**: a string represntation of a bounding box in the format: 
   '[ymin, xmin, ymax, xmax]', where values are relative and the 
   origin in the upper-left
 
 ### Invocation example (Python)
 See example below, or check out example useage in 
-```animl-ml/notebooks/test-inference-pipeline.ipynb``` or 
-```animl-ml/api/mira/test/test_api.py``. 
+```[animl-ml/notebooks/test-inference-pipeline.ipynb](https://github.com/tnc-ca-geo/animl-ml/blob/master/notebooks/test-inference-pipeline.ipynb)``` or 
+```[animl-ml/api/mira/test/test_api.py](https://github.com/tnc-ca-geo/animl-ml/blob/master/api/mira/test/test_api.py)```. 
 
 ```python
 import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 API_URL = 'https://2xuiw1fidh.execute-api.us-west-1.amazonaws.com/dev/classify'
-IMG = '/path/to/local/image.jpg'
+IMG_PATH = '/path/to/local/image.jpg'
 # IMG_URL = 'http://www.example.com/image.jpg'
 BBOX = [0.536007, 0.434649, 0.635773, 0.543599]
 
 fields = {}
 if IMG_URL:
     fields['url'] = IMG_URL
-if IMG:
-    fields['image'] = (IMG, open(IMG, 'rb'), 'image/jpeg')
+if IMG_PATH:
+    fields['image'] = (IMG_PATH, open(IMG_PATH, 'rb'), 'image/jpeg')
 if BBOX:
     fields['bbox'] = json.dumps(BBOX)
 
@@ -63,12 +63,12 @@ r = requests.post(API_URL,
 ## `Development`
 
 ### Deploy to dev
-```
+```shell
 $ npm run deploy-dev
 ```
 
 ### Deploy to production
-```
+```shell
 $ npm run deploy-prod
 ```
 
@@ -80,7 +80,7 @@ directory), or run it with the ```--img-url [http://some-image-url.jpg]```
 option to test submitting an image that's accessible somewhere on the internet 
 via url. You can also optionally pass in a bounding box.
 
-```
+```shell
 # from the animl-ml/api/mira directory
 # setup venv if you havene't already
 
