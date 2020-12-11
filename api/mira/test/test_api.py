@@ -28,6 +28,7 @@ params = {
 
 
 def handle_response(r):
+    print(r)
     print("response: {}".format(r.text))
 
 
@@ -61,7 +62,7 @@ def request_inference(img, img_url, bbox, local=False):
     r = requests.post(API_URL,
                       params = params,
                       data = multipart_data,
-                      headers = {'Content-Type': multipart_data.content_type})    
+                      headers = {'Content-Type': multipart_data.content_type})
     return r
 
 

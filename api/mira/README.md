@@ -1,13 +1,28 @@
-# MIRA API :rat:
-API for MIRA species classification requests
+# MIRA API
+API for real-time MIRA species classification
 
 ## `Intro`
+MIRA is a pair of species classification models trained on camera trap data from 
+the Channel Islands in California. The models were developed by 
+[Nanolayers](http://www.nanolayers.com/). The "mira-small" model is designed to 
+detect rodents, while the "mira-large" model classifies foxes and skunks.  
+
+This API allows users to submit an image file (or the URL of an image available 
+on the internet) for inference against the two MIRA models and recieve  
+predictions. 
+
+### Related repos
+- Mira                http://github.com/tnc-ca-geo/mira
+- Mira web server     https://github.com/fullmetalfelix/Mira
+- Mira worker         https://github.com/fullmetalfelix/Mira-Worker
+
 
 ## `Usage`
 
 ### Invocation example (Python)
 
 ### Invocation example (Node)
+
 
 ## `Development`
 

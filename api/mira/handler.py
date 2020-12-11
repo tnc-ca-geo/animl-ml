@@ -112,9 +112,10 @@ def parse_multipart_req(body, content_type):
 def handler(event, context):
     """
     Handle MIRA classification requests
+
     Must be submitted as a POST request encoded as multipart/form-data
     Event body must contain the following fields:
-
+    
         image: the image to classify, encoded in base64, OR...
         url: url of remotely-hosted image    
         bbox (optional): bounding box of detected animal, represented as
@@ -122,9 +123,7 @@ def handler(event, context):
             
     Returns:
         A json object with MIRA model predictions
-    """
-    logger.debug("event: {}".format(event))
-
+    """    
     try:
         event["body"] = base64.b64decode(event["body"])
     except Exception as e:

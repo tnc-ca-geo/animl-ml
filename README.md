@@ -1,4 +1,4 @@
-# Animl ML :rat:
+# Animl ML
 Machine Learning resources for camera trap data processing
 
 ## `Related repos`
