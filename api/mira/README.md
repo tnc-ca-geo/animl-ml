@@ -8,8 +8,8 @@ the Channel Islands in California. The models were developed by
 detect rodents, while the "mira-large" model classifies foxes and skunks.  
 
 This API allows users to submit an image file (or the URL of an image available 
-on the internet) for inference against the two MIRA models and recieve  
-predictions. 
+on the internet) for inference against the two MIRA models and recieve 
+predictions in the response. 
 
 ### Related repos
 - Mira                http://github.com/tnc-ca-geo/mira
@@ -47,10 +47,12 @@ via url. You can also optionally pass in a bounding box.
 ```
 # from the animl-ml/api/mira directory
 # setup venv if you havene't already
+
 $ virtualenv env -p python3
 $ pip3 install -r requirements.txt
 
 # activate it
+
 $ source env/bin/activate
 
 # to submit a local image for testing,

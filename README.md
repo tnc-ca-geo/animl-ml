@@ -19,10 +19,10 @@ trained on labeled images from Santa Cruz Island.
 
 This repo contains: 
   - Python Notebooks to facilitate loading and deploying models as endpoints on 
-  AWS
+  AWS Sagemaker
   - Resources for running & debugging model endpoints locally
-  - A Serverless API for submitting images & bounding boxes to the MIRA for 
-  real-time inference
+  - A Serverless API for submitting images & bounding boxes to the MIRA 
+  endpoints for real-time inference
   - A notebook with code examples for invoking the APIs and testing the 
   inference pipeline end-to-end
 
@@ -43,14 +43,14 @@ architecture. You can find Phython Nodetbooks to facilitate the deployment of
 models in the ```notebooks/``` directory of this repo.
 
 To deploy a model endpoint, start up a Sagemaker notebook instance in AWS, 
-associate this repo with it, and step through one of the notebooks in the 
-```notebooks/``` directory to get started.
+associate this repo with it, and step through one of the deployment notebooks 
+in the ```notebooks/``` directory to get started.
 
 ## `Local endpoint development and debugging`
 
 If you want to launch a TensorFlow serving container locally 
-to debug and test endpoints locally before deploying, this repo contains a 
-script to clone AWS's 
+to debug and test endpoints on your computer before deploying, this repo 
+contains a script to clone AWS's 
 [Sagemaker TensorFlow Serving Container repo](https://github.com/aws/sagemaker-tensorflow-serving-container/) 
 and [Microsoft's CameraTraps repo](https://github.com/microsoft/CameraTraps) 
 and instructions below to help you run the container, load models, dependencies, 
@@ -58,7 +58,7 @@ and pre/postprocessing scripts into it, and submit requests to the local
 endpoints for inference.
 
 NOTE: be sure that you have the folloing installed:
- - [aws-vault](https://github.com/99designs/aws-vault),  
+ - [aws-vault](https://github.com/99designs/aws-vault)
  - [docker](https://docs.docker.com/docker-for-mac/install/) 
  - [virtualenv](https://virtualenv.pypa.io/en/latest/) 
 
