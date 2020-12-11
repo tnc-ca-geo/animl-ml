@@ -1,0 +1,69 @@
+openapi: 3.0.0
+info:
+  title: MIRA API
+  description: 
+    API for submitting cameratrap images for MIRA species classification
+  version: 0.1.0
+paths:
+  /classify:
+    post:
+      summary: 
+        Processes the input image using the MIRA classification models
+      description: 
+        Submit image to MIRA models for inference and return predictions
+      requestBody:
+        required: true
+        description: 
+          "Please send inference requests in a mulitpart form. You 
+          may submit images either in full as binary files, or, if you'd 
+          like to run inference against an image hosted somewhere online, you 
+          may submit just its URL. You can also optionally pass in an object 
+          bounding box, which the API will use to crop the image before 
+          sumitting it to the models for inference.
+
+          The possible parts of the form are:
+
+          - image: a binary image file
+
+          - url: a url pointing to an image online
+
+          - bbox: a string represntation of a bounding box in the format: 
+            '[ymin, xmin, ymax, xmax]', where values are relative and the 
+            origin in the upper-left"
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/body'
+            encoding:
+              image:
+                contentType: image/jpeg, image/png, application/octet-stream
+                style: form
+      responses:
+        200:
+          description: >
+            Image was successfully processed. The predictions will be returned 
+            as json.
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: >
+            Malformed request. See the error message to diagnose the issue.
+        500:
+          description: >
+            Error occurred performing inference on the image, or consolidating 
+            the results. See the error message to diagnose the issue.
+
+components:
+  schemas:
+    body:
+      type: object
+      properties:
+        image:
+          type: string
+          format: binary
+        url:
+          type: string
+        bbox:
+          type: string
