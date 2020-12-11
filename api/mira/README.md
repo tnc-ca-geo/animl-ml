@@ -84,7 +84,7 @@ Prediction responses will look like:
 }]
 ```
 
-## `Development`
+## `Development` :camera:
 
 ### Deploy to dev
 ```shell

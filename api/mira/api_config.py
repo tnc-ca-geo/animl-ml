@@ -1,3 +1,7 @@
+"""
+MIRA API config
+"""
+
 MODELS = [
   {
 			"endpoint_name": "mira-large",

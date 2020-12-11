@@ -1,7 +1,12 @@
-import argparse
-import requests
+"""
+MIRA API test script - Species detection for camera trap images
+The Nature Conservancy of California
+"""
+
 import os
 import json
+import argparse
+import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 
@@ -27,9 +32,12 @@ params = {
 }
 
 
-def handle_response(r):
-    print(r)
-    print("response: {}".format(r.text))
+def handle_response(res):
+    """
+    Handle preditction response
+    """
+    print(res)
+    print("response: {}".format(res.text))
 
 
 def bbox_to_list(bbox_string):
@@ -38,37 +46,37 @@ def bbox_to_list(bbox_string):
     "[0.536007, 0.434649, 0.635773, 0.543599]" to list of floats
     """
     bbox = bbox_string.strip('][').split(', ')
-    bbox = list(map(lambda x: float(x), bbox))
+    bbox = [float(x) for x in bbox]
     return bbox
 
 
-def request_inference(img, img_url, bbox, local=False):
+def request_inference(img, img_url, bbox):
     """
     Prep and send image as mulitpart form-data
     """
     fields = {}
     if img_url:
         fields['url'] = img_url
-    if img: 
+    if img:
         img_path = os.path.join(TEST_IMG_DIR, img)
         fields['image'] = (img, open(img_path, 'rb'), 'image/jpeg')
     if bbox:
         bbox = bbox_to_list(bbox)
         fields['bbox'] = json.dumps(bbox)
-    
+
     print("Posting inference request to {}".format(API_URL))
     print("with fields: {}".format(fields))
     multipart_data = MultipartEncoder(fields = fields)
-    r = requests.post(API_URL,
+    res = requests.post(API_URL,
                       params = params,
                       data = multipart_data,
                       headers = {'Content-Type': multipart_data.content_type})
-    return r
+    return res
 
 
 if __name__ == "__main__":
     if args.img or args.img_url:  
-        r = request_inference(args.img, args.img_url, args.bbox, args.local)
+        r = request_inference(args.img, args.img_url, args.bbox)
         handle_response(r)
     else:
         print("Supply either an image filename or url to submit for inference")

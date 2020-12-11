@@ -1,13 +1,19 @@
+"""
+MIRA API - Species detection for camera trap images
+The Nature Conservancy of California
+"""
+
 import io
 import re
 import json
-from requests_toolbelt.multipart import decoder
-from urllib.request import urlopen
 import base64
+from urllib.request import urlopen
+from requests_toolbelt.multipart import decoder
 from PIL import Image
+import botocore
+import boto3
 from log_config import logger
 import api_config
-import boto3
 
 
 PATTERN = re.compile('(?<=form-data; name=").*?(?=")')
@@ -16,6 +22,9 @@ client = boto3.client("runtime.sagemaker")
 
 
 def create_response(status_code, message, headers=api_config.HEADERS):
+    """
+    Create response to return to client
+    """
     return {
         "statusCode": status_code,
         "headers": headers,
@@ -24,18 +33,26 @@ def create_response(status_code, message, headers=api_config.HEADERS):
 
 
 def handle_error(status_code, message):
-    logger.debug("Error: {}".format(message))
+    """
+    Log error and generate response for client
+    """
+    logger.debug("Error: %s", message)
     return create_response(status_code, {"message": message})
 
 
 def crop(img, bbox):
     """
     API expects bbox as [ymin, xmin, ymax, xmax], in relative values,
-    convert to tuple (xmin, ymin, xmax, ymax), in pixel values 
+    convert to tuple (xmin, ymin, xmax, ymax), in pixel values
     """
-    W, H = img.size
+    width, height = img.size
     if bbox:
-        boxpx = (int(bbox[1]*W), int(bbox[0]*H), int(bbox[3]*W), int(bbox[2]*H))
+        boxpx = (
+          int(bbox[1] * width),
+          int(bbox[0] * height),
+          int(bbox[3] * width),
+          int(bbox[2] * height)
+        )
         img = img.crop(boxpx)
     return img
 
@@ -44,7 +61,6 @@ def run_inference(img, bbox, models=api_config.MODELS):
     """
     Get class predictions from MIRA models
     """
-
     img = Image.open(img)
     img = crop(img, bbox)
 
@@ -53,7 +69,8 @@ def run_inference(img, bbox, models=api_config.MODELS):
     img.save(buf, format="JPEG")
 
     output = {}
-    for model in models: # TODO: invoke async
+    # TODO: call endpoints async
+    for model in models:
         name = model["endpoint_name"]
         output[name] = model
         predictions = {}
@@ -68,10 +85,10 @@ def run_inference(img, bbox, models=api_config.MODELS):
             response_body = response["Body"].read()
             response_body = response_body.decode("utf-8")
             pred = json.loads(response_body)["predictions"][0]
-            for i in range(len(pred)):
+            for i, _ in enumerate(pred):
                 predictions[model["classes"][i]] = float(pred[i])
-        except Exception as e:
-            logger.debug("Error invoking {}: {}".format(name, e))
+        except botocore.exceptions.ClientError as err:
+            logger.debug("Error invoking MIRA model endpoint: %s", err)
         output[name]["predictions"] = predictions
 
     return output
@@ -84,7 +101,7 @@ def parse_multipart_req(body, content_type):
     req = {}
 
     # convert to bytes if needed
-    if type(body) is str:
+    if isinstance(body, str):
         body = bytes(body, "utf-8")
 
     multipart_data = decoder.MultipartDecoder(body, content_type)
@@ -114,20 +131,19 @@ def handler(event, context):
     Handle MIRA classification requests
 
     Must be submitted as a POST request encoded as multipart/form-data
-    Event body must contain the following fields:
-    
-        image: the image to classify, encoded in base64, OR...
-        url: url of remotely-hosted image    
-        bbox (optional): bounding box of detected animal, represented as
+    Form must contain the following parts:
+        - image: the image to classify, encoded in base64, OR...
+        - url: url of remotely-hosted image
+        - bbox (optional): bounding box of detected animal, represented as
             [ymin, xmin, ymax, xmax], in relative values
-            
+
     Returns:
         A json object with MIRA model predictions
-    """    
+    """
     try:
         event["body"] = base64.b64decode(event["body"])
-    except Exception as e:
-        msg = "Error decodeing image " + str(e)
+    except base64.binascii.Error as err:
+        msg = "Error decodeing image " + str(err)
         return handle_error(400, msg)
 
     headers = event.get("headers", {"Content-Type": ""})
@@ -140,8 +156,8 @@ def handler(event, context):
         if img:
             try:
                 res = create_response(200, run_inference(img, bbox))
-            except Exception as e:
-                msg = "Error performing classification: " + str(e)
+            except Exception as err:
+                msg = "Error performing classification: " + str(err)
                 res = handle_error(500, msg)
         else:
             msg = "No image or image URL present in form-data"
