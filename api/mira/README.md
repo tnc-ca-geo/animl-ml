@@ -60,6 +60,30 @@ r = requests.post(API_URL,
                   headers = {'Content-Type': multipart_data.content_type})
 ```
 
+Prediction responses will look like:
+
+```json
+[{
+  "mira-large": {
+    "endpoint_name": "mira-large",
+    "classes": ["fox", "skunk", "empty"],
+    "predictions": {
+      "fox": 4.20211e-06,
+      "skunk": 0.964001,
+      "empty": 0.0359947
+    }
+  },
+  "mira-small": {
+    "endpoint_name": "mira-small",
+    "classes": ["rodent", "empty"],
+    "predictions": {
+      "rodent": 0.737944,
+      "empty": 0.262056
+    }
+  }
+}]
+```
+
 ## `Development`
 
 ### Deploy to dev
