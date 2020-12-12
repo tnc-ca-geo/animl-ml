@@ -86,6 +86,14 @@ Prediction responses will look like:
 
 ## `Development` :camera:
 
+### Prerequisits
+The commands below require you have the following tools globally installed:
+- [Serverless](https://www.serverless.com/framework/docs/getting-started/)
+- [aws-cli](https://aws.amazon.com/cli/)
+
+As well as an AWS config profile called "serverless-admin". Good instructions 
+[here](https://www.serverless.com/framework/docs/providers/aws/guide/credentials/).
+
 ### Deploy to dev
 ```shell
 $ npm run deploy-dev
