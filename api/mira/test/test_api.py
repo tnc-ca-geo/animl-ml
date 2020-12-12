@@ -1,5 +1,6 @@
 """
-MIRA API test script - Species detection for camera trap images
+MIRA API test script
+Submit an image & bounding box for species detection for camera trap images
 The Nature Conservancy of California
 """
 
