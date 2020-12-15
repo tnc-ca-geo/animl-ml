@@ -40,57 +40,63 @@ def handle_error(status_code, message):
     return create_response(status_code, {"message": message})
 
 
-def crop(img, bbox):
+def predict(model, img_data):
+    """
+    Get predictions from model endpoint
+    """
+    predictions = {}
+    try:
+        response = client.invoke_endpoint(
+            EndpointName = model["endpoint_name"],
+            ContentType = "application/x-image",
+            Body = img_data
+        )
+
+        # parse response
+        response_body = response["Body"].read()
+        response_body = response_body.decode("utf-8")
+        pred = json.loads(response_body)["predictions"][0]
+        for i, _ in enumerate(pred):
+            predictions[model["classes"][i]] = float(pred[i])
+    except botocore.exceptions.ClientError as err:
+        logger.debug("Error invoking MIRA model endpoint: %s", err)
+    return predictions
+
+
+def get_bbox(img, bbox):
     """
     API expects bbox as [ymin, xmin, ymax, xmax], in relative values,
     convert to tuple (xmin, ymin, xmax, ymax), in pixel values
     """
     width, height = img.size
+    bbox_px = (0, 0, width, height)
     if bbox:
-        boxpx = (
+        bbox_px = (
           int(bbox[1] * width),
           int(bbox[0] * height),
           int(bbox[3] * width),
           int(bbox[2] * height)
         )
-        img = img.crop(boxpx)
-    return img
+    return bbox_px
 
 
 def run_inference(img, bbox, models=api_config.MODELS):
     """
     Get class predictions from MIRA models
     """
+    output = {}
     img = Image.open(img)
-    img = crop(img, bbox)
+    img = img.crop(get_bbox(img, bbox))
 
-    # convert to bytes
+    # convert to bytes array
     buf = io.BytesIO()
     img.save(buf, format="JPEG")
 
-    output = {}
     # TODO: call endpoints async
     for model in models:
         name = model["endpoint_name"]
         output[name] = model
-        predictions = {}
-        try:
-            response = client.invoke_endpoint(
-                EndpointName = name,
-                ContentType = "application/x-image", 
-                Body = buf.getvalue()
-            )
-
-            # parse response
-            response_body = response["Body"].read()
-            response_body = response_body.decode("utf-8")
-            pred = json.loads(response_body)["predictions"][0]
-            for i, _ in enumerate(pred):
-                predictions[model["classes"][i]] = float(pred[i])
-        except botocore.exceptions.ClientError as err:
-            logger.debug("Error invoking MIRA model endpoint: %s", err)
-        output[name]["predictions"] = predictions
-
+        output[name]["predictions"] = predict(model, buf.getvalue())
     return output
 
 
@@ -122,7 +128,6 @@ def parse_multipart_req(body, content_type):
                 req["bbox"] = json.loads(part.content.decode("utf-8"))
             else:
                 logger.debug("Bad field name in form-data")
-
     return req
 
 
@@ -162,7 +167,7 @@ def handler(event, context):
         else:
             msg = "No image or image URL present in form-data"
             res = handle_error(400, msg)
-    else:   
+    else:
         msg = "Content type is not multipart/form-data"
         res = handle_error(400, msg)
 

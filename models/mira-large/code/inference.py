@@ -32,7 +32,6 @@ def is_img_gray(image):
         if not tmp:
             is_gray = False
             break
-
     return is_gray
 
 
@@ -52,8 +51,8 @@ def input_handler(data, context):
 
         image = image.resize(INPUT_SHAPE, Image.LANCZOS)
 
-        # this procedure has to be the same as the one in datagen used 
-        # for training. The pixel data is numerically shifted around its mean 
+        # this procedure has to be the same as the one in datagen used
+        # for training. The pixel data is numerically shifted around its mean
         # and scaled by its stdev
         image = np.asarray(image).astype(np.float32)
         image /= 255
@@ -70,12 +69,10 @@ def input_handler(data, context):
         img_data[0,0,] = image
 
         # format input
-        inp = json.dumps({
+        return json.dumps({
             "signature_name": "serving_default",
             "instances": img_data.tolist()
         })
-
-        return inp
 
     raise ValueError('{{"error": "unsupported content type {}"}}'.format(
         context.request_content_type or "unknown"))
@@ -87,8 +84,5 @@ def output_handler(data, context):
     """
     if data.status_code != 200:
         raise ValueError(data.content.decode("utf-8"))
+    return data.content, context.accept_header
 
-    response_content_type = context.accept_header
-    prediction = data.content
-
-    return prediction, response_content_type
