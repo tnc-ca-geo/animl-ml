@@ -1,8 +1,8 @@
-service: mira
 app: animl
-org: nathanielrindlaub
+org: animl
+service: mira
 
-frameworkVersion: '1'
+# frameworkVersion: '1'
 
 package:
   exclude:
@@ -16,36 +16,21 @@ package:
     - requirements.txt
     - .test/**
 
-
 provider:
   name: aws
   runtime: python3.8
   stage: ${opt:stage, 'dev'}
   region: us-west-1
-  profile: serverless-admin
+  profile: animl
+  iamManagedPolicies: 
+    - 'arn:aws:iam::aws:policy/AWSLambdaExecute'
+    - 'arn:aws:iam::aws:policy/AmazonSageMakerFullAccess'
   apiGateway:
     # tells API Gateway to treat multipart/form-data requests as binary type 
     # and parse request body into base64 format
     binaryMediaTypes:
       - 'multipart/form-data'
     #  - '*/*' # or maybe wildcard?
-
-# you can add statements to the Lambda function's IAM Role here
-#  iamRoleStatements:
-#    - Effect: "Allow"
-#      Action:
-#        - "s3:ListBucket"
-#      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
-#    - Effect: "Allow"
-#      Action:
-#        - "s3:PutObject"
-#      Resource:
-#        Fn::Join:
-#          - ""
-#          - - "arn:aws:s3:::"
-#            - "Ref" : "ServerlessDeploymentBucket"
-#            - "/*"
-
 
 # TODO: when we implement a queuing system, look into Lambda "destinations"
 # for async invocation:
@@ -57,7 +42,7 @@ functions:
     handler: handler.handler
     name: MiraClassifyLambdaFunction-${opt:stage, self:provider.stage, 'dev'}
     description: Run inference on images with Mira models 
-    role: arn:aws:iam::719729260530:role/animl-lambda-role # different role? should this be defined in serverless?
+    # role: arn:aws:iam::719729260530:role/animl-lambda-role # different role? should this be defined in serverless? moved up to service level? 
     events:
      - http:
          path: classify

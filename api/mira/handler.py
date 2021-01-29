@@ -152,8 +152,7 @@ def handler(event, context):
         return handle_error(400, msg)
 
     headers = event.get("headers", {"Content-Type": ""})
-    content_type = headers.get("Content-Type")
-
+    content_type = headers.get("Content-Type") or headers.get("content-type")
     if "multipart/form-data" in content_type:
         req = parse_multipart_req(event["body"], content_type)
         bbox = req.get("bbox")

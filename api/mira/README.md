@@ -135,7 +135,7 @@ $ python test/test_api.py \
 # with the --img-url option:
 
 $ python test/test_api.py \
-  --img-url https://animl-test-images.s3-us-west-1.amazonaws.com/p_001205.jpg \
+  --img-url https://animl-sample-images.s3-us-west-1.amazonaws.com/p_001205.jpg \
   --bbox "[0.5383, 0.437, 0.63283, 0.5448999999999999]"
 
 ```
