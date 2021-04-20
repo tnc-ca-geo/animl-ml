@@ -9,17 +9,14 @@ import json
 import base64
 from urllib.request import urlopen
 from requests_toolbelt.multipart import decoder
-from PIL import Image
+from PIL import Image, ImageFile
 import botocore
 import boto3
 from log_config import logger
 import api_config
 
-
 PATTERN = re.compile('(?<=form-data; name=").*?(?=")')
-
 client = boto3.client("runtime.sagemaker")
-
 
 def create_response(status_code, message, headers=api_config.HEADERS):
     """
