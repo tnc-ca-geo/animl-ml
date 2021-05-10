@@ -40,6 +40,7 @@ def input_handler(data, context):
     Pre-process request input before it is sent to TensorFlow Serving REST API
     """
     log.info(" preprocessing request...")
+    print("context: {}".format(context))
 
     if context.request_content_type == "application/x-image":
         payload = data.read()
