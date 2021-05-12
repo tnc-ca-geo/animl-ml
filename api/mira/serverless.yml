@@ -20,7 +20,7 @@ provider:
   name: aws
   runtime: python3.8
   stage: ${opt:stage, 'dev'}
-  region: us-west-1
+  region: us-west-2
   profile: animl
   iamManagedPolicies: 
     - 'arn:aws:iam::aws:policy/AWSLambdaExecute'
