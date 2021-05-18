@@ -22,7 +22,7 @@ args = parser.parse_args()
 
 
 LOCAL_URL = "http://localhost:3000/dev/classify"
-DEV_URL = "https://2xuiw1fidh.execute-api.us-west-1.amazonaws.com/dev/classify"
+DEV_URL = "https://9q9u0ns6ul.execute-api.us-west-2.amazonaws.com/dev/classify"
 API_URL =  LOCAL_URL if args.local else DEV_URL
 TEST_IMG_DIR = os.path.abspath(
   os.path.join(os.path.dirname(__file__), "..", "..", "..", "input"))

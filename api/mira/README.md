@@ -41,7 +41,7 @@ See example below, or check out example useage in
 import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
-API_URL = 'https://2xuiw1fidh.execute-api.us-west-1.amazonaws.com/dev/classify'
+API_URL = 'https://9q9u0ns6ul.execute-api.us-west-2.amazonaws.com/dev/classify'
 IMG_PATH = '/path/to/local/image.jpg'
 # IMG_URL = 'http://www.example.com/image.jpg'
 BBOX = [0.536007, 0.434649, 0.635773, 0.543599]
