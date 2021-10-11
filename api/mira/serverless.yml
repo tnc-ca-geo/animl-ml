@@ -49,6 +49,18 @@ functions:
          method: post
          cors: true 
 
+resources:
+  Resources:
+
+    # SSM Param for MIRA API URL
+    SSMParameterApiurl:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Description: MIRA api url
+        Name: /ml/mira-api-url-${opt:stage, self:provider.stage, 'dev'}
+        Type: String
+        Value: !Sub https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${opt:stage, self:provider.stage, 'dev'}/classify
+
 custom:
   pythonRequirements:
     dockerizePip: true
