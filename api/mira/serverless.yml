@@ -67,4 +67,3 @@ custom:
 
 plugins:
   - serverless-python-requirements
-  - serverless-offline
