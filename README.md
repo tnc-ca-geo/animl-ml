@@ -11,11 +11,7 @@ Machine Learning resources for camera trap data processing
 ## `Intro`
 
 We are using AWS Sagemaker to host our model endpoints. The initial models
-we will run inference on are 
-[Microsoft's Megadetector](https://github.com/microsoft/CameraTraps/blob/master/megadetector.md),
-a model to detect animals, people, and vehicles in camera trap images, and 
-[MIRA](https://github.com/tnc-ca-geo/mira), a pair of species classifiers 
-trained on labeled images from Santa Cruz Island.
+we will run inference on are [Microsoft's Megadetector](https://github.com/microsoft/CameraTraps/blob/master/megadetector.md), a model to detect animals, people, and vehicles in camera trap images, and [MIRA](https://github.com/tnc-ca-geo/mira), a pair of species classifiers trained on labeled images from Santa Cruz Island.
 
 This repo contains: 
   - Python Notebooks to facilitate loading and deploying models as endpoints on 
