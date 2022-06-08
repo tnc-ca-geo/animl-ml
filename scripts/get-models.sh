@@ -29,7 +29,7 @@
 #                   └─ variables.data-00000-of-00001
 #                   └─ variables.index
 
-bucket="s3://animl-models"
+bucket="s3://animl-model-zoo"
 modelPath="$PWD/models"
 
 # Microsoft Megadetector v4
