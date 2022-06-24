@@ -26,7 +26,7 @@ NOTE: you will need a Megadetector API key in order to use their API.
 
 ## `Deploy a model endpoint using AWS Sagemaker Notebook`
 
-When you deploy model endpoints to Sagemaker, AWS starts an EC2 instance and starts a docker container with in it optimized for serving particular model's architecture. You can find Phython Nodetbooks to facilitate the deployment of models in the ```notebooks/``` directory of this repo.
+When you deploy model endpoints to Sagemaker, AWS starts an EC2 instance and starts a docker container with in it optimized for serving particular model's architecture. You can find Python Notebooks to facilitate the deployment of models in the ```notebooks/``` directory of this repo.
 
 To deploy a model endpoint, start up a Sagemaker notebook instance in AWS, associate this repo with it, and step through one of the deployment notebooks in the ```notebooks/``` directory to get started.
 
@@ -34,7 +34,7 @@ To deploy a model endpoint, start up a Sagemaker notebook instance in AWS, assoc
 
 If you want to launch a TensorFlow serving container locally to debug and test endpoints on your computer before deploying, this repo contains a script to clone AWS's [Sagemaker TensorFlow Serving Container repo](https://github.com/aws/sagemaker-tensorflow-serving-container/) and [Microsoft's CameraTraps repo](https://github.com/microsoft/CameraTraps) and instructions below to help you run the container, load models, dependencies, and pre/postprocessing scripts into it, and submit requests to the local endpoints for inference.
 
-NOTE: be sure that you have the folloing installed:
+NOTE: be sure that you have the following installed:
  - [aws-vault](https://github.com/99designs/aws-vault)
  - [docker](https://docs.docker.com/docker-for-mac/install/) 
  - [virtualenv](https://virtualenv.pypa.io/en/latest/) 
