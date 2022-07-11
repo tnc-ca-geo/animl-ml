@@ -18,6 +18,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
 
 # TORCHSERVE
 RUN git clone https://github.com/pytorch/serve.git
+RUN git reset --hard 490fbdb9dd4d13b3d914cb47dcc4daa2c02fedf5
 RUN pip install ./serve/
 RUN pip install captum
 
