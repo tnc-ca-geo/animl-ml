@@ -16,6 +16,7 @@ class ModelHandler(BaseHandler):
     """
 
     img_size = 640
+    min_conf_thresh = 0.001
     """Image size (px). Images will be resized to this resolution before inference.
     """
 
@@ -70,7 +71,7 @@ class ModelHandler(BaseHandler):
 
     def postprocess(self, inference_output):
         # perform NMS (nonmax suppression) on model outputs
-        pred = non_max_suppression(inference_output[0], conf_thres=.1, iou_thres=.45)
+        pred = non_max_suppression(inference_output[0], conf_thres=self.min_conf_thresh, iou_thres=.45)
 
         # initialize empty list of detections for each image
         detections = [[] for _ in range(len(pred))]
@@ -93,7 +94,7 @@ class ModelHandler(BaseHandler):
                     "x2": xyxy[2].item(),
                     "y2": xyxy[3].item(),
                     "confidence": conf,
-                    "class": label
+                    "class": class_idx + 1 # schema we use is 1 for animal, 2 for person, 3 for vehicle
                 })
 
         # format each detection
