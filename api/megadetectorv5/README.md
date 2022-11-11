@@ -1,9 +1,8 @@
 # Setup Instructions
 
 ## Download weights and torchscript model
-
+From root directory, run:
 ```
-cd animl-ml/api/megadetectorv5
 aws s3 sync s3://animl-model-zoo/megadetectorv5/ models/megadetectorv5/
 ```
 

@@ -135,6 +135,9 @@ dmypy.json
 models/*/*
 !models/*/code
 
+# ignore tmp
+tmp/
+
 # container log files
 log.txt
 .DS_Store
