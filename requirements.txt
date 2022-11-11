@@ -38,7 +38,7 @@ parso==0.7.1
 pathos==0.3.0
 pexpect==4.8.0
 pickleshare==0.7.5
-Pillow==8.3.2
+Pillow==9.0.1
 pox==0.3.2
 ppft==1.7.6.6
 prompt-toolkit==3.0.8
