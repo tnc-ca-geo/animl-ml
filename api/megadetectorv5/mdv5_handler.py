@@ -15,7 +15,7 @@ class ModelHandler(BaseHandler):
     A custom model handler implementation.
     """
 
-    img_size = 640
+    img_size = 1280
     min_conf_thresh = 0.001
     """Image size (px). Images will be resized to this resolution before inference.
     """
