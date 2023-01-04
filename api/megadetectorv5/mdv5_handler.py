@@ -49,9 +49,9 @@ class ModelHandler(BaseHandler):
         # Compat layer: normally the envelope should just return the data
         # directly, but older versions of Torchserve didn't have envelope.
         image = row.get("data") or row.get("body")
-        if isinstance(image, str):
-            # if the image is a string of bytesarray.
-            image = base64.b64decode(image)
+        # if isinstance(image, str):
+        #     # if the image is a string of bytesarray.
+        #     image = base64.b64decode(image)
 
         # If the image is sent as bytesarray
         if isinstance(image, (bytearray, bytes)):
@@ -63,6 +63,7 @@ class ModelHandler(BaseHandler):
         # force convert to tensor
         # and resize to [img_size, img_size]
         image = np.asarray(image)
+        np.save("/app/test-before-letterbox.arr", image)
         image = letterbox(image, new_shape=self.img_size,
                     stride=64, auto=True)[0]  # JIT requires auto=False\
         image = image.transpose((2, 0, 1))  # HWC to CHW; PIL Image is RGB already
@@ -73,9 +74,6 @@ class ModelHandler(BaseHandler):
         image /= 255
         image = torch.unsqueeze(image, 0)
         # has shape BATCH_SIZE=1 x 3 x IMG_SIZE x IMG_SIZE
-        print(image.shape)
-        print(type(image))
-
         return image
 
     def initialize(self, context):
@@ -106,6 +104,11 @@ class ModelHandler(BaseHandler):
         :return: list of inference output in NDArray
         """
         # Do some inference call to engine here and return output
+        print(type(model_input))
+        print(model_input.shape)
+        print(model_input.max())
+        print(model_input.min())
+        torch.save(model_input, "/app/test.arr")
         model_output = self.model.forward(model_input)
         return model_output
 
@@ -258,20 +261,16 @@ def xywh2xyxy(x):
 def letterbox(im, new_shape=(640, 640), color=(114, 114, 114), auto=True, scaleFill=False, scaleup=True, stride=32):
     # Resize and pad image while meeting stride-multiple constraints
     shape = im.shape[:2]  # current shape [height, width]
-    print("shape start: ", shape)
     if isinstance(new_shape, int):
         new_shape = (new_shape, new_shape)
-        print("new shape: ", new_shape)
 
     # Scale ratio (new / old)
     r = min(new_shape[0] / shape[0], new_shape[1] / shape[1])
     if not scaleup:  # only scale down, do not scale up (for better val mAP)
         r = min(r, 1.0)
-    print("r: ", r)
     # Compute padding
     ratio = r, r  # width, height ratios
     new_unpad = int(round(shape[1] * r)), int(round(shape[0] * r))
-    print("new_unpad 1: ", new_unpad)
     dw, dh = new_shape[1] - new_unpad[0], new_shape[0] - new_unpad[1]  # wh padding
     if auto:  # minimum rectangle
         dw, dh = np.mod(dw, stride), np.mod(dh, stride)  # wh padding
@@ -282,17 +281,11 @@ def letterbox(im, new_shape=(640, 640), color=(114, 114, 114), auto=True, scaleF
 
     dw /= 2  # divide padding into 2 sides
     dh /= 2
-    print("new_unpad 2: ", new_unpad)
-    print("shape: ", shape)
     if shape[::-1] != new_unpad:  # resize
         im = cv2.resize(im, new_unpad, interpolation=cv2.INTER_LINEAR)
     top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
     left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
     im = cv2.copyMakeBorder(im, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)  # add border
-    print("top: ", top)
-    print("bottom: ", bottom)
-    print("left", left)
-    print("right", right)
     return im, ratio, (dw, dh)
 
 def open_image(input_file: Union[str, BytesIO]) -> Image:
@@ -336,11 +329,13 @@ def open_image(input_file: Union[str, BytesIO]) -> Image:
             raise
 
     else:
+        print("trying to open image")
         image = Image.open(input_file)
     if image.mode not in ('RGBA', 'RGB', 'L', 'I;16'):
         raise AttributeError(
             f'Image {input_file} uses unsupported mode {image.mode}')
     if image.mode == 'RGBA' or image.mode == 'L':
+        print("trying to convert image")
         # PIL.Image.convert() returns a converted copy of this image
         image = image.convert(mode='RGB')
 
