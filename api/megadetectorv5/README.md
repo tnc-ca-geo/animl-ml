@@ -10,7 +10,7 @@ aws s3 sync s3://animl-model-zoo/megadetectorv5/ models/megadetectorv5/
 
 first, clone and install yolov5 dependencies and yolov5 following these instructions: https://docs.ultralytics.com/tutorials/torchscript-onnx-coreml-export/
 
-Then, make sure to install the correct version of torch and torchvision, the same versions used to save the torchscript megadetector model, we need to use these to load the torchscript model.
+Then, if running locally, make sure to install the correct version of torch and torchvision, the same versions used to save the torchscript megadetector model, we need to use these to load the torchscript model. Check the Dockerfile for versions.
 
 Size needs to be same as in mdv5_handler.py for good performance. Run this from this directory 
 ```
