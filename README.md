@@ -6,7 +6,6 @@ Machine Learning resources for camera trap data processing
 - Animl API               http://github.com/tnc-ca-geo/animl-api
 - Animl base program      http://github.com/tnc-ca-geo/animl-base
 - Animl ingest function   http://github.com/tnc-ca-geo/animl-ingest
-- Animl desktop app       https://github.com/tnc-ca-geo/animl-desktop
 
 ## `Intro`
 
