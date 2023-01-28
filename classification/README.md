@@ -88,14 +88,21 @@ This will be a two step process:
   conda install --name cameratraps-classifier -c conda-forge awscli
   aws configure --profile animl
   ```
-  - To download all the imates referenced in the cct.json file, navigate to `~/animl-analytics/` and run:
+  - To download all the images referenced in the cct.json file, navigate to `~/animl-analytics/` and run:
   ```bash
   python utils/download_images.py \
    --coco-file  /home/studio-lab-user/classifier-training/mdcache/v5.0b/<dataset_name>_cct.json\
-   --output-dir /home/studio-lab-user/images/<dataset_name>/
+   --output-dir /home/studio-lab-user/images/<dataset_name>
   ```
 
 ### Convert exported COCO file to MegaDetector output format
-Many of the following steps expect the image annotations to be in the same format that MegaDetector outputs after processing a batch of images. 
+Many of the following steps expect the image annotations to be in the same format that MegaDetector outputs after processing a batch of images. To convert the COCO for Cameratraps file that we exported from Animl to a MegaDetector results file, navigate to the `/home/studio-lab-user/` directory and run:
+
+```bash
+python animl-ml/classification/utils/cct_to_md.py \
+  --input_filename /home/studio-lab-user/classifier-training/mdcache/v5.0b/<dataset_name>_cct.json \
+  --output_filename /home/studio-lab-user/classifier-training/mdcache/v5.0b/<dataset_name>_md.json
+```
+
 
 ### Crop images 

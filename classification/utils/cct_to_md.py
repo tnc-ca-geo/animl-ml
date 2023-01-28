@@ -144,5 +144,4 @@ if __name__ == '__main__':
     args = _parse_args()
     cct_to_md(
         input_filename=args.input_filename,
-        dataset=args.dataset,
         output_filename=args.output_filename)
