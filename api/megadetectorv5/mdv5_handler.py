@@ -59,7 +59,6 @@ class ModelHandler(BaseHandler):
         else:
             print("not a bytearray")
             assert False
-
         # force convert to tensor
         # and resize to [img_size, img_size]
         image = np.asarray(image)
