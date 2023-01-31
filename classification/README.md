@@ -26,7 +26,7 @@ Finally, activate the `cameratraps-classifier` env and install `azure-cosmos` de
 
 ```
 conda activate cameratraps-classifier
-conda install -c conda-forge azure-cosmos
+conda install -n cameratraps-classifier -c conda-forge azure-cosmos
 ```
 
 #### Add additional directories
@@ -66,7 +66,7 @@ The following environment variables are useful to have in `.bashrc`:
 
 ```bash
 # Python development
-export PYTHONPATH="/path/to/repos/CameraTraps:/path/to/repos/ai4eutils"
+export PYTHONPATH="/home/<user>/CameraTraps:/home/<user>/ai4eutils"
 export MYPYPATH=$PYTHONPATH
 ```
 
@@ -91,18 +91,89 @@ This will be a two step process:
   - To download all the images referenced in the cct.json file, navigate to `~/animl-analytics/` and run:
   ```bash
   python utils/download_images.py \
-   --coco-file  /home/studio-lab-user/classifier-training/mdcache/v5.0b/<dataset_name>_cct.json\
-   --output-dir /home/studio-lab-user/images/<dataset_name>
+   --coco-file  ~/classifier-training/mdcache/v5.0b/<dataset_name>_cct.json\
+   --output-dir ~/images/<dataset_name>
   ```
 
-### Convert exported COCO file to MegaDetector output format
-Many of the following steps expect the image annotations to be in the same format that MegaDetector outputs after processing a batch of images. To convert the COCO for Cameratraps file that we exported from Animl to a MegaDetector results file, navigate to the `/home/studio-lab-user/` directory and run:
+### Convert exported COCO file to MegaDetector results format
+Some of the following steps expect the image annotations to be in the same format that MegaDetector outputs after processing a batch of images. To convert the COCO for Cameratraps file that we exported from Animl to a MegaDetector results file, navigate to the `/home/studio-lab-user/` directory and run:
 
 ```bash
 python animl-ml/classification/utils/cct_to_md.py \
-  --input_filename /home/studio-lab-user/classifier-training/mdcache/v5.0b/<dataset_name>_cct.json \
-  --output_filename /home/studio-lab-user/classifier-training/mdcache/v5.0b/<dataset_name>_md.json
+  --input_filename ~/classifier-training/mdcache/v5.0b/<dataset_name>_cct.json \
+  --output_filename ~/classifier-training/mdcache/v5.0b/<dataset_name>_md.json
 ```
 
-
 ### Crop images 
+To crop images to their detections' respective bounding boxes, run:
+
+```bash
+python animl-ml/classification/utils/crop_detections.py \
+    ~/classifier-training/mdcache/v5.0b/<dataset_name>_md.json \
+    ~/crops/<dataset_name> \
+    --images-dir ~/images/<dataset_name> \
+    --threshold 0 \  # irrelevant for ground-truthed detections but we pass it in anyhow
+    --square-crops \
+    --threads 50 \
+    --logdir $BASE_LOGDIR
+```
+
+### Convert MegaDetector results file to queried_images.json
+Microsoft's `CameraTraps/classification/create_classification_dataset.py` takes the output of `json_validator.py` (see their docs on what that does [here](https://github.com/microsoft/CameraTraps/tree/main/classification#2-query-megadb-for-labeled-images)) as an input. To convert our MegaDetecotr results file to `queried_images.json` file, run: 
+
+```bash
+python animl-ml/classification/utils/md_to_queried_images.py \
+  --input_filename ~/classifier-training/mdcache/v5.0b/<dataset_name>_md.json \
+  --dataset <dataset_name> \
+  --output_filename $BASE_LOGDIR/queried_images.json
+```
+
+### Create classification dataset & split crops into train/val/test sets
+This step is well documented in the `microsoft/CameraTraps/classification` [README](https://github.com/microsoft/CameraTraps/tree/main/classification#4-create-classification-dataset-and-split-image-crops-into-trainvaltest-sets-by-location), but some sample arguments are below: 
+
+```bash
+python CameraTraps/classification/create_classification_dataset.py \
+    $BASE_LOGDIR \
+    --mode csv splits \
+    --queried-images-json $BASE_LOGDIR/queried_images.json \
+    --cropped-images-dir ~/crops \
+    --detector-output-cache-dir ~/classifier-training/mdcache --detector-version 5.0b \
+    --threshold 0 \
+    --min-locs 3 \
+    --val-frac 0.2 --test-frac 0.2 \
+    --method random
+```
+
+### (Optional) inspect dataset
+Follow instructions [here](https://github.com/microsoft/CameraTraps/tree/main/classification#5-optional-manually-inspect-dataset), but add and run the following code block at the beginning of the "Imports and Constants" section of `inspect_dataset.ipynb`:
+
+```python
+import sys
+sys.path.append("/home/studio-lab-user/CameraTraps")
+sys.path.append("/home/studio-lab-user/stuiai4eutils")
+sys.path
+```
+
+### Train classifier
+
+```bash
+python train_classifier.py \
+    $BASE_LOGDIR \
+    ~/crops \
+    --model-name efficientnet-b3 --pretrained \
+    --label-weighted \
+    --epochs 50 --batch-size 160 --lr 3e-5 \
+    --weight-decay 1e-6 \
+    --num-workers 4 \ # default is 8, but I got warnings that the max was 4 in SageMaker Studio Lab env
+    --logdir $BASE_LOGDIR --log-extreme-examples 3
+```
+
+NOTE: I ran into a few issues running the command above: 
+- had to update torchvision and pytorch:
+```bash
+conda update torchvision
+conda update pytorch
+```
+- The environment initially had trouble finding CUDA, but [trick described here for Linux](https://github.com/microsoft/CameraTraps/tree/main/classification#verifying-that-cuda-is-available-and-dealing-with-the-case-where-it-isnt) solved it. 
+- After those fixes I was able to get the training started but quickly ran into a `RuntimeError: CUDA out of memory.` error. The SageMaker Studio Lab env gives you 15GB memory, which evidently was not enough, but I was able to resume training by dropping the `--batch-size` param down to 32. 
+- Ultimately, however, after 10 epochs, I maxed out SageMaker Studio Lab's 25GB of disk space. The vast majority of the disk usage was from Conda envs and packages (22GB).
