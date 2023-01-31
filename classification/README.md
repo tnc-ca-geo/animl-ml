@@ -38,7 +38,7 @@ ai4eutils/                      # Microsoft's AI for Earth Utils repo
 
 animl-analytics/                # animl-analytics repo (utilities for exporting images)
 
-animl-ml/                       # This repo
+animl-ml/                       # This repo, contains Animl-specific utilities
 
 CameraTraps/                    # Microsoft's CameraTraps repo
     classification/
@@ -47,8 +47,8 @@ CameraTraps/                    # Microsoft's CameraTraps repo
 
 classifier-training/            
     mdcache/                    # cached "MegaDetector" outputs
-        v5.0b/                  # NOTE: MegaDetector is in quotes because we're
-            datasetX.json       # also storing Animl annotations here too
+        v5.0b/                  #   NOTE: MegaDetector is in quotes because we're
+            datasetX.json       #   also storing Animl annotations here too
     megaclassifier/             # files relevant to MegaClassifier
 
 crops/                          # local directory to save cropped images
