@@ -103,11 +103,6 @@ class ModelHandler(BaseHandler):
         :return: list of inference output in NDArray
         """
         # Do some inference call to engine here and return output
-        print(type(model_input))
-        print(model_input.shape)
-        print(model_input.max())
-        print(model_input.min())
-        torch.save(model_input, "/app/test.arr")
         model_output = self.model.forward(model_input)
         return model_output
 

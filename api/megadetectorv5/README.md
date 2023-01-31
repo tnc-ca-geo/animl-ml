@@ -35,6 +35,8 @@ The .mar file is what is served by torchserve.
 bash docker_mdv5.sh
 ```
 
+Note: The Dockerfile is adapted from the base pytorch torchserve image in order to address an issue with the libjpeg version. We use conda to install dependencies, including torchserve, because conda installs the version of libjpeg that was used to train and test Megadetector originally. See this issue for more detail https://github.com/pytorch/serve/issues/2054
+
 ## Return prediction in normalized coordinates with category integer and confidence score
 
 ```
