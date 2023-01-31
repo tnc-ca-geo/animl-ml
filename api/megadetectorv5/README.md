@@ -8,7 +8,7 @@ aws s3 sync s3://animl-model-zoo/megadetectorv5/ models/megadetectorv5/
 
 ## Export yolov5 weights as torchscript model
 
-first, clone and install yolov5 dependencies and yolov5 following these instructions: https://docs.ultralytics.com/tutorials/torchscript-onnx-coreml-export/
+First, clone and install yolov5 dependencies and yolov5 following these instructions: https://docs.ultralytics.com/tutorials/torchscript-onnx-coreml-export/
 
 Then, if running locally, make sure to install the correct version of torch and torchvision, the same versions used to save the torchscript megadetector model, we need to use these to load the torchscript model. Check the Dockerfile for versions.
 
