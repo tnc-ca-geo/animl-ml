@@ -1,7 +1,7 @@
 # Classifier training resources
 Guidance for training classifiers using Animl data.
 
-## `Training a Classifier using SageMaker Studio Log`
+## `Training a Classifier using SageMaker Studio Lab`
 
 ### Prerequisites
 
@@ -9,7 +9,7 @@ Sign up for an [AWS SageMaker Studio Lab](https://studiolab.sagemaker.aws) accou
 
 ### Setup
 
-This workflow relies heavily on the [classifier training](https://github.com/microsoft/CameraTraps/tree/main/classification) instructions and code published by Microsoft's AI for Earth Team. Essentially these instructions simply provide guidance on  exporting images and annotations from Animl and shoe-horning them into the AI 4 Earth team's classifier training workflow. As such, we highly recommend referencing the `microsoft/CameraTraps/classification` README.md in conjunction with these instructions, as they go into much more detail about each of the steps outline below.
+This workflow relies heavily on the [classifier training](https://github.com/microsoft/CameraTraps/tree/main/classification) instructions and code published by Microsoft's AI for Earth Team. The instructions below simply provide guidance on  exporting images and annotations from Animl and shoe-horning them into the AI 4 Earth team's classifier training workflow. As such, we highly recommend referencing the `microsoft/CameraTraps/classification` README.md in conjunction with these instructions, as they go into much more detail about each of the steps outlined here.
 
 #### Clone relevant repos and build Conda environments
 
@@ -20,7 +20,7 @@ Follow the same steps to clone the
 - [animl-analytics](https://github.com/tnc-ca-geo/animl-ml) repo
 - and this ([animl-ml](https://github.com/tnc-ca-geo/animl-ml)) repo
 
-Next, navigate to `~/Cameratraps/` project root directory and run `conda env update -f environment-classifier.yml --prune` to build the `cameratraps-classifier` Conda environment, which is the primary one we'll be using for the rest of this workflow.
+Next, navigate to `~/Cameratraps/` project root directory and run `conda env update -f environment-classifier.yml --prune` to build the `cameratraps-classifier` Conda environment, which is the primary one we'll be using.
 
 Finally, activate the `cameratraps-classifier` env and install `azure-cosmos` dependency (it's required but seemed to be missing from the env):
 
