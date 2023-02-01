@@ -32,6 +32,7 @@ The .mar file is what is served by torchserve.
 ## Serve the torchscript model with torchserve
 
 ```
+docker build -t cv2-torchserve:0.5.3-cpu
 bash docker_mdv5.sh
 ```
 
@@ -42,3 +43,25 @@ Note: The Dockerfile is adapted from the base pytorch torchserve image in order 
 ```
 curl http://127.0.0.1:8080/predictions/mdv5 -T ../../input/sample-img-fox.jpg
 ```
+
+# Deploying the model to a Sagemaker Serverless Endpoint
+
+Once you have run the model archiver step above, you're ready to upload that model to s3 so it can be deployed to a serverless inference endpoint!
+
+Run 
+
+```
+aws s3 cp model_store/megadetectorv5-yolov5-1-batch-1280-1280.mar s3://animl-model-zoo/megadetectorv5/megadetectorv5-yolov5-reproduced.mar
+``` 
+
+to copy the model to the appropriate s3 bucket where pytorch and tensorflow models (for MIRA) are stored.
+
+You'll also need to push the locally built docker image to the ECR repository (which if it is not created, you can create in the deploy notebook).
+
+```
+docker tag cv2-torchserve:0.5.3-cpu 830244800171.dkr.ecr.us-west-2.amazonaws.com/torchserve-mdv5-sagemaker:latest
+
+docker push 830244800171.dkr.ecr.us-west-2.amazonaws.com/torchserve-mdv5-sagemaker:latest
+```
+
+then open the jupyter notebook titled mdv5_deploy.ipynb from a Sagemaker Notebook instance. You can also run this locally but would need to set up sagemaker dependencies so the notebook instance is recommended.
