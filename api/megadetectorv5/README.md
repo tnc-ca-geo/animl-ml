@@ -59,6 +59,9 @@ to copy the model to the appropriate s3 bucket where pytorch and tensorflow mode
 You'll also need to push the locally built docker image to the ECR repository (which if it is not created, you can create in the deploy notebook).
 
 ```
+aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 830244800171.dkr.ecr.us-w
+est-2.amazonaws.com
+
 docker tag cv2-torchserve:0.5.3-cpu 830244800171.dkr.ecr.us-west-2.amazonaws.com/torchserve-mdv5-sagemaker:latest
 
 docker push 830244800171.dkr.ecr.us-west-2.amazonaws.com/torchserve-mdv5-sagemaker:latest

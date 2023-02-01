@@ -4,7 +4,7 @@ RUN ls -la /home/venv/bin/pip
 USER root
 # RUN pip install --upgrade pip && pip install opencv-python ipython
 # commit id https://github.com/ultralytics/yolov5/blob/9286336cb49d577873b2113739788bbe3b90f83c/requirements.txt
-# handling libjpeg version by installing from source
+# handling libjpeg version by installing from source 
 RUN apt-get update -q && \
     apt-get install -q -y --no-install-recommends \
         bzip2 \
@@ -51,9 +51,10 @@ RUN mkdir -p /opt && \
     find /opt/conda/ -follow -type f -name '*.js.map' -delete && \
     /opt/conda/bin/conda clean -afy
 RUN conda update conda
-RUN conda install -c pytorch -c powerai -c conda-forge torchserve gitpython ipython matplotlib>=3.2.2 numpy==1.23.4 \
+RUN conda install -c conda-forge mamba -y
+RUN mamba install -c pytorch -c powerai -c conda-forge torchserve gitpython ipython matplotlib>=3.2.2 numpy==1.23.4 \
     Pillow==9.2.0 psutil PyYAML>=5.3.1 requests>=2.23.0 scipy==1.9.3 \
     tqdm>=4.64.0 tensorboard>=2.4.1 pandas>=1.1.4 \
-    seaborn>=0.11.0 pytorch==1.10.0 opencv==4.6 torchvision==0.11.1
+    seaborn>=0.11.0 pytorch==1.10.0 opencv==4.6 torchvision==0.11.1 -y
 RUN pip install thop>=0.1.1 
 USER model-server
