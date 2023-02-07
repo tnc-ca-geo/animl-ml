@@ -17,7 +17,7 @@ To clone the necessary repos, navigate to the `studio-lab-user`'s `home` directo
 
 Follow the same steps to clone the
 - [microsoft/ai4eutils](https://github.com/microsoft/ai4eutils) repo
-- [animl-analytics](https://github.com/tnc-ca-geo/animl-ml) repo
+- [animl-analytics](https://github.com/tnc-ca-geo/animl-analytics) repo
 - and this ([animl-ml](https://github.com/tnc-ca-geo/animl-ml)) repo
 
 Next, navigate to `~/Cameratraps/` project root directory and run `conda env update -f environment-classifier.yml --prune` to build the `cameratraps-classifier` Conda environment, which is the primary one we'll be using.
@@ -96,7 +96,7 @@ This will be a two step process:
   ```
 
 ### Convert exported COCO file to MegaDetector results format
-Some of the following steps expect the image annotations to be in the same format that MegaDetector outputs after processing a batch of images. To convert the COCO for Cameratraps file that we exported from Animl to a MegaDetector results file, navigate to the `/home/studio-lab-user/` directory and run:
+Some of the following steps expect the image annotations to be in the same [format](https://github.com/microsoft/CameraTraps/tree/main/api/batch_processing/#batch-processing-api-output-format) that MegaDetector outputs after processing a batch of images. To convert the COCO for Cameratraps file that we exported from Animl to a MegaDetector results file, navigate to the `/home/studio-lab-user/` directory and run:
 
 ```bash
 python animl-ml/classification/utils/cct_to_md.py \
