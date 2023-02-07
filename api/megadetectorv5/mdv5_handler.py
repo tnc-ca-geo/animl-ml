@@ -62,7 +62,6 @@ class ModelHandler(BaseHandler):
         # force convert to tensor
         # and resize to [img_size, img_size]
         image = np.asarray(image)
-        np.save("/app/test-before-letterbox.arr", image)
         image = letterbox(image, new_shape=self.img_size,
                     stride=64, auto=True)[0]  # JIT requires auto=False\
         image = image.transpose((2, 0, 1))  # HWC to CHW; PIL Image is RGB already
