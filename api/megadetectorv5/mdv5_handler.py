@@ -49,12 +49,11 @@ class ModelHandler(BaseHandler):
         # Compat layer: normally the envelope should just return the data
         # directly, but older versions of Torchserve didn't have envelope.
         image = row.get("data") or row.get("body")
-        # if isinstance(image, str):
-        #     # if the image is a string of bytesarray.
-        #     image = base64.b64decode(image)
-
-        # If the image is sent as bytesarray
+        if isinstance(image, str):
+            # if the image is a string of bytesarray.
+            image = base64.b64decode(image)
         if isinstance(image, (bytearray, bytes)):
+            # If the image is sent as bytesarray
             image = load_image(io.BytesIO(image))
         else:
             print("not a bytearray")
@@ -62,7 +61,6 @@ class ModelHandler(BaseHandler):
         # force convert to tensor
         # and resize to [img_size, img_size]
         image = np.asarray(image)
-        np.save("/app/test-before-letterbox.arr", image)
         image = letterbox(image, new_shape=self.img_size,
                     stride=64, auto=True)[0]  # JIT requires auto=False\
         image = image.transpose((2, 0, 1))  # HWC to CHW; PIL Image is RGB already
@@ -88,7 +86,6 @@ class ModelHandler(BaseHandler):
         properties = context.system_properties
         model_dir = properties.get("model_dir")
         self.device = torch.device("cuda:" + str(properties.get("gpu_id")) if torch.cuda.is_available() else "cpu")
-
         # Read model serialize/pt file
         serialized_file = self.manifest['model']['serializedFile']
         model_pt_path = os.path.join(model_dir, serialized_file)
@@ -105,6 +102,7 @@ class ModelHandler(BaseHandler):
         # Do some inference call to engine here and return output
         model_output = self.model.forward(model_input)
         return model_output
+
 
     def postprocess(self, inference_output):
         # perform NMS (nonmax suppression) on model outputs
