@@ -71,12 +71,14 @@ and if you run the torch hub load command again, you will see where the source h
 Using cache found in /root/.cache/torch/hub/ultralytics_yolov5_master
 ```
 
-We'll use this to archive the model. Currently we are using [yolov5 commit hash 5c91da](https://github.com/ultralytics/yolov5/tree/5c91daeaecaeca709b8b6d13bd571d068fdbd003)
+You path to the .cache will likely differ! Edit it in the following step.
+
+We'll use the yolov5 source when archiving the model for deployment. Currently we are using [yolov5 commit hash 5c91da](https://github.com/ultralytics/yolov5/tree/5c91daeaecaeca709b8b6d13bd571d068fdbd003)
 
 `pip install torch-model-archiver` then,
 
 ```
- torch-model-archiver --model-name mdv5 --version 1.0.0 --serialized-file model-weights/md_v5a.0.0.pt --extra-files index_to_name.json --extra-files /root/.cache/torch/hub/ultralytics_yolov5_master/ --handler mdv5_handler.py
+torch-model-archiver --model-name mdv5 --version 1.0.0 --serialized-file model-weights/md_v5a.0.0.pt --extra-files index_to_name.json --extra-files /root/.cache/torch/hub/ultralytics_yolov5_master/ --handler mdv5_handler.py
 mv mdv5.mar model_store/mdv5a.mar
 ```
 
@@ -87,7 +89,7 @@ We can locally test this model prior to deploying.
 ## Locally build and serve the torchscript model with torchserve
 
 ```
-docker build -t torchserve-mdv5a:0.5.3-cpu
+docker build -t torchserve-mdv5a:0.5.3-cpu .
 bash docker_mdv5.sh model_store
 ```
 
