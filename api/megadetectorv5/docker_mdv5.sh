@@ -1,2 +1,2 @@
-# $1 id path to the dir holding the .mar file. there should be only one .mar file
-docker run -p 8080:8080 -v $1:/opt/ml/model 830244800171.dkr.ecr.us-west-2.amazonaws.com/torchserve-mdv5-sagemaker:latest serve
+# $1 is the path to the dir holding the .mar file. there should be only one .mar file
+docker run -p 8080:8080 -v $1:/opt/ml/model torchserve-mdv5a:0.5.3-cpu:latest serve

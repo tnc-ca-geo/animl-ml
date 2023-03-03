@@ -18,11 +18,9 @@ This repo contains:
   - A Serverless API for submitting images & bounding boxes to the MIRA endpoints for real-time inference
   - A notebook with code examples for invoking the APIs and testing the inference pipeline end-to-end
 
-## `Test the inference pipeline`
+## `Test the inference pipeline` - TODO, update for new pipeline.
 
-The most fun place to start is the ```notebooks/test-inference-pipeline.ipynb```. Fire it up and step though the notebook to test submitting images to the Megadetector API for object detection and then to MIRA API for species classification.
-
-NOTE: you will need a Megadetector API key in order to use their API. 
+The most fun place to start is the ```notebooks/test-inference-pipeline.ipynb```. Fire it up and step though the notebook to test submitting images to the Megadetector API for object detection and then to MIRA API for species classification. 
 
 ## `Deploy a model endpoint using AWS Sagemaker Notebook`
 
@@ -50,16 +48,16 @@ $ cd animl-ml
 $ pip3 install -r requirements.txt
 ```
 
-### 2. Get the CameraTrap and Sagemaker contianer repos
+### 2. Get the CameraTrap and Sagemaker container repos
 
 After cloning this repo, from the ```animl-ml/animl-ml/``` project directory, run the script to clone the necessary external repos:
 ```
 $ bash ./scripts/get-libs.sh
 ```
 
-### 3. Get the models
+### 3. Get the MIRA models
 
-The models we use in this app are all available in Tensorflow ProtoBuf format at s3://animl-model-zoo. To download and unzip them, run the following from the same ```animl-ml``` project directory:
+The MIRA models we use in this app are available in Tensorflow ProtoBuf format at s3://animl-model-zoo. To download and unzip them, run the following from the same ```animl-ml``` project directory:
 ```
 $ aws-vault exec <vault_profile> -- bash ./scripts/get-models.sh
 ```
@@ -105,3 +103,7 @@ To test the endpoint, pass the ```make-request.py``` script a path to an local i
 ```
 $ aws-vault exec <vault_profile> -- python ./scripts/make-request.py input/sample-img.jpg
 ```
+
+### Megadetector V5a endpoint
+
+See [api/megadetectorv5/README.md] for instructions on setting up a local endpoint and deploying a serverless endpoint of the new Megadetector v5 model. Instructions above are based on the old Megadetector v4 model written in Tensorflow and need to be updated.
