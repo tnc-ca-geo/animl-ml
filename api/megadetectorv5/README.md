@@ -95,8 +95,15 @@ bash docker_mdv5.sh model_store
 
 ## Return prediction in normalized coordinates with category integer and confidence score
 
+The torchserve endpoint can be queried like
 ```
 curl http://127.0.0.1:8080/predictions/mdv5 -T ../../input/sample-img-fox.jpg
+```
+
+However, to test the endpoint that is queried during production, test the sagemaker endpoint, which uses the configurations set in deployment/config.properties to adjust threads, worker count, and other container parameters:
+
+```
+curl http://127.0.0.1:8080/invocations -T ../../input/sample-img-fox.jpg
 ```
 
 Note: In the past we attempted to adapt the Dockerfile to address an issue with the libjpeg version. We used conda to install dependencies, including torchserve, because conda installs the version of libjpeg that was used to train and test Megadetector originally. See this issue for more detail https://github.com/pytorch/serve/issues/2054. We [reverted this change](https://github.com/tnc-ca-geo/animl-ml/pull/98/commits/b2bbff5316fbb15023025b2373dcdc9354dd26a7) because installing from conda ballooned the image size above the 10Gb limit set by Sagemaker Serverless. The results are virtually equivalent with the different libjpeg version.
@@ -113,7 +120,7 @@ Run
 
 to copy the model to the appropriate s3 bucket where pytorch and tensorflow models (for MIRA) are stored.
 
-You'll also need to push the locally built docker image to the ECR repository. Sinc ethe images are large, it is fastest to do this from a sagemaker notebook instance in the mdv5_deploy.ipynb. Instructions are below if you want to do this from your local machine anyway.
+You'll also need to push the locally built docker image to the ECR repository. Since the images are large, it is fastest to do this from a sagemaker notebook instance in the mdv5_deploy.ipynb. Instructions are below if you want to do this from your local machine anyway.
 
 ```
 aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 830244800171.dkr.ecr.us-w
