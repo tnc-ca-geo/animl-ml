@@ -114,12 +114,18 @@ class ModelHandler(BaseHandler):
 
         for i, image_detections in enumerate(pred):  # axis 0: for each image
             for det in image_detections:  # axis 1: for each detection
-                # x1,y1,x2,y2 in normalized image coordinates (i.e. 0.0-1.0)
-                xyxy = det[:4] / self.img_size
                 # we need to store the coordinates with respect to the original image size
                 # not the resized image from letterbox. images are typically wider than tall
                 # so usually the y axis only gets resized by letterbox.
                 det[:4] = scale_boxes((self.img_size, self.img_size), det[:4], self.original_img_shape)
+                print("det", det[:4])
+                print("og", self.original_img_shape)
+                # x1,y1,x2,y2 in normalized image coordinates (i.e. 0.0-1.0)
+                xyxy = [det[0] / self.original_img_shape[0],
+                        det[1] / self.original_img_shape[1],
+                        det[2] / self.original_img_shape[0],
+                        det[3] / self.original_img_shape[1]]
+
                 # confidence value
                 conf = det[4].item()
                 # index of predicted class
@@ -369,16 +375,18 @@ def load_image(input_file: Union[str, BytesIO]) -> Image:
 #from yolov5
 def scale_boxes(img1_shape, boxes, img0_shape, ratio_pad=None):
     # Rescale boxes (xyxy) from img1_shape to img0_shape
+    print("1", boxes)
     if ratio_pad is None:  # calculate from img0_shape
         gain = min(img1_shape[0] / img0_shape[0], img1_shape[1] / img0_shape[1])  # gain  = old / new
         pad = (img1_shape[1] - img0_shape[1] * gain) / 2, (img1_shape[0] - img0_shape[0] * gain) / 2  # wh padding
     else:
         gain = ratio_pad[0][0]
         pad = ratio_pad[1]
-
+    print("2", boxes)
     boxes[..., [0, 2]] -= pad[0]  # x padding
     boxes[..., [1, 3]] -= pad[1]  # y padding
     boxes[..., :4] /= gain
+    print("3", boxes)
     clip_boxes(boxes, img0_shape)
     return boxes
 
@@ -389,6 +397,8 @@ def clip_boxes(boxes, shape):
         boxes[..., 1].clamp_(0, shape[0])  # y1
         boxes[..., 2].clamp_(0, shape[1])  # x2
         boxes[..., 3].clamp_(0, shape[0])  # y2
+        print("4", boxes)
     else:  # np.array (faster grouped)
         boxes[..., [0, 2]] = boxes[..., [0, 2]].clip(0, shape[1])  # x1, x2
         boxes[..., [1, 3]] = boxes[..., [1, 3]].clip(0, shape[0])  # y1, y2
+        print("5", boxes)
