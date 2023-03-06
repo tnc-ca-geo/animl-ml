@@ -25,7 +25,7 @@ class ModelHandler(BaseHandler):
     """
 
     img_size = 1280
-    min_conf_thresh = 0.00001
+    min_conf_thresh = 0.0005
     """Image size (px). Images will be resized to this resolution before inference.
     """
 
@@ -61,8 +61,9 @@ class ModelHandler(BaseHandler):
         # force convert to tensor
         # and resize to [img_size, img_size]
         image = np.asarray(image)
-        image = letterbox(image, new_shape=self.img_size,
-                    stride=64, auto=True)[0]  # JIT requires auto=False\
+        self.original_img_shape = image.shape
+        image, self.ratio, self.dw_dh = letterbox(image, new_shape=self.img_size,
+                    stride=64, auto=True)  # JIT requires auto=False\
         image = image.transpose((2, 0, 1))  # HWC to CHW; PIL Image is RGB already
         image = np.ascontiguousarray(image)
         image = torch.from_numpy(image)
@@ -115,6 +116,10 @@ class ModelHandler(BaseHandler):
             for det in image_detections:  # axis 1: for each detection
                 # x1,y1,x2,y2 in normalized image coordinates (i.e. 0.0-1.0)
                 xyxy = det[:4] / self.img_size
+                # we need to store the coordinates with respect to the original image size
+                # not the resized image from letterbox. images are typically wider than tall
+                # so usually the y axis only gets resized by letterbox.
+                det[:4] = scale_boxes((self.img_size, self.img_size), det[:4], self.original_img_shape)
                 # confidence value
                 conf = det[4].item()
                 # index of predicted class
@@ -360,3 +365,30 @@ def load_image(input_file: Union[str, BytesIO]) -> Image:
     image = open_image(input_file)
     image.load()
     return image
+
+#from yolov5
+def scale_boxes(img1_shape, boxes, img0_shape, ratio_pad=None):
+    # Rescale boxes (xyxy) from img1_shape to img0_shape
+    if ratio_pad is None:  # calculate from img0_shape
+        gain = min(img1_shape[0] / img0_shape[0], img1_shape[1] / img0_shape[1])  # gain  = old / new
+        pad = (img1_shape[1] - img0_shape[1] * gain) / 2, (img1_shape[0] - img0_shape[0] * gain) / 2  # wh padding
+    else:
+        gain = ratio_pad[0][0]
+        pad = ratio_pad[1]
+
+    boxes[..., [0, 2]] -= pad[0]  # x padding
+    boxes[..., [1, 3]] -= pad[1]  # y padding
+    boxes[..., :4] /= gain
+    clip_boxes(boxes, img0_shape)
+    return boxes
+
+def clip_boxes(boxes, shape):
+    # Clip boxes (xyxy) to image shape (height, width)
+    if isinstance(boxes, torch.Tensor):  # faster individually
+        boxes[..., 0].clamp_(0, shape[1])  # x1
+        boxes[..., 1].clamp_(0, shape[0])  # y1
+        boxes[..., 2].clamp_(0, shape[1])  # x2
+        boxes[..., 3].clamp_(0, shape[0])  # y2
+    else:  # np.array (faster grouped)
+        boxes[..., [0, 2]] = boxes[..., [0, 2]].clip(0, shape[1])  # x1, x2
+        boxes[..., [1, 3]] = boxes[..., [1, 3]].clip(0, shape[0])  # y1, y2
