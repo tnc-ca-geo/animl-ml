@@ -12,6 +12,7 @@ from PIL import Image
 from io import BytesIO
 from typing import Union
 import os
+from time import time
 np.random.seed(42)
 torch.manual_seed(42)
 os.environ["PYTHONHASHSEED"] = "42"
@@ -40,7 +41,7 @@ class ModelHandler(BaseHandler):
         Returns:
             Tensor: single Tensor of shape [BATCH_SIZE=1, 3, IMG_SIZE, IMG_SIZE]
         """
-
+        start = time()
         # load images
         # taken from https://github.com/pytorch/serve/blob/master/ts/torch_handler/vision_handler.py
         
@@ -61,10 +62,12 @@ class ModelHandler(BaseHandler):
         # force convert to tensor
         # and resize to [img_size, img_size]
         image = np.asarray(image)
+        print("Image.shape: ", image.shape)
         self.original_img_shape = image.shape
         image, self.ratio, self.dw_dh = letterbox(image, new_shape=self.img_size,
                     stride=64, auto=True)  # JIT requires auto=False\
         self.letterbox_shape = image.shape
+        print("Letterbox shape: ", self.letterbox_shape)
         image = image.transpose((2, 0, 1))  # HWC to CHW; PIL Image is RGB already
         image = np.ascontiguousarray(image)
         image = torch.from_numpy(image)
@@ -72,6 +75,7 @@ class ModelHandler(BaseHandler):
         image = image.float()
         image /= 255
         image = torch.unsqueeze(image, 0)
+        print("XXXXX  Preprocess time: ", time()-start)
         # has shape BATCH_SIZE=1 x 3 x IMG_SIZE x IMG_SIZE
         return image
 
@@ -81,7 +85,7 @@ class ModelHandler(BaseHandler):
         :param context: context contains model server system properties
         :return:
         """
-
+        start = time()
         #  load the model
         self.manifest = context.manifest
 
@@ -94,6 +98,7 @@ class ModelHandler(BaseHandler):
         # Model
         self.model =torch.hub.load(model_dir, 'custom', source = "local", skip_validation=True, path=model_pt_path) 
         self.initialized = True
+        print("XXXXX  Initialization time: ", time()-start)
 
     def inference(self, model_input):
         """
@@ -101,12 +106,15 @@ class ModelHandler(BaseHandler):
         :param model_input: transformed model input data
         :return: list of inference output in NDArray
         """
+        start = time()
         # Do some inference call to engine here and return output
         model_output = self.model.forward(model_input)
+        print("XXXXX  Inference time: ", time()-start)
         return model_output
 
 
     def postprocess(self, inference_output):
+        start = time()
         # perform NMS (nonmax suppression) on model outputs
         pred = non_max_suppression(inference_output, conf_thres=self.min_conf_thresh, iou_thres=.45)
 
@@ -138,6 +146,7 @@ class ModelHandler(BaseHandler):
                     "confidence": conf,
                     "class": class_idx + 1 # schema we use is 1 for animal, 2 for person, 3 for vehicle
                 })
+        print("XXXXX  Postprocessing time: ", time()-start)
 
         # format each detection
         return detections
