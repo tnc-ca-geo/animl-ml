@@ -145,3 +145,16 @@ Size needs to be same as in mdv5_handler.py for good performance. Run this from 
 python ../../../yolov5/export.py --weights model-weights/md_v5a.0.0.pt --img 1280 1280 --batch 1 
 ```
 this will create models/megadetectorv5/md_v5a.0.0.torchscript , which will expect a fixed image size input of 1280 x 1280 and a one image at a time (batch size of 1).
+
+### Running the inference comparison notebook on your local host
+
+`conda create -n mdv5a python=3.9`
+
+```
+conda activate mdv5a
+
+pip install "gitpython" "ipython" "matplotlib>=3.2.2" "numpy==1.23.4" "opencv-python==4.6.0.66" \
+"Pillow==9.2.0" "psutil" "PyYAML>=5.3.1" "requests>=2.23.0" "scipy==1.9.3" "thop>=0.1.1" \
+"torch==1.10.0" "torchvision==0.11.1" "tqdm>=4.64.0" "tensorboard>=2.4.1" "pandas>=1.1.4" \
+"seaborn>=0.11.0" "setuptools>=65.5.1" "onnxruntime" "ipykernel" "albumentations"
+```
