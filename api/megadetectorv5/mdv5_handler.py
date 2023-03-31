@@ -5,9 +5,11 @@ import numpy as np
 import cv2
 import base64
 import torch
-import torchvision.transforms as tf
-import torchvision
+import onnx
+import onnxruntime as ort
 import io
+import torchvision
+import torch
 from PIL import Image
 from io import BytesIO
 from typing import Union
@@ -25,7 +27,7 @@ class ModelHandler(BaseHandler):
     A custom model handler implementation.
     """
 
-    img_size = 1280
+    img_size = (960,1280)
     min_conf_thresh = 0.0005
     """Image size (px). Images will be resized to this resolution before inference.
     """
@@ -65,7 +67,7 @@ class ModelHandler(BaseHandler):
         print("Image.shape: ", image.shape)
         self.original_img_shape = image.shape
         image, self.ratio, self.dw_dh = letterbox(image, new_shape=self.img_size,
-                    stride=64, auto=True)  # JIT requires auto=False\
+                    stride=64, scaleup=False, auto=False)  # JIT requires auto=False\
         self.letterbox_shape = image.shape
         print("Letterbox shape: ", self.letterbox_shape)
         image = image.transpose((2, 0, 1))  # HWC to CHW; PIL Image is RGB already
@@ -88,15 +90,14 @@ class ModelHandler(BaseHandler):
         start = time()
         #  load the model
         self.manifest = context.manifest
-
         properties = context.system_properties
         model_dir = properties.get("model_dir")
         self.device = torch.device("cuda:" + str(properties.get("gpu_id")) if torch.cuda.is_available() else "cpu")
-        # Read model serialize/pt file
+        # Read onnx file
         serialized_file = self.manifest['model']['serializedFile']
-        model_pt_path = os.path.join(model_dir, serialized_file)
+        model_path = os.path.join(model_dir, serialized_file)
         # Model
-        self.model =torch.hub.load(model_dir, 'custom', source = "local", skip_validation=True, path=model_pt_path) 
+        self.ort_session = ort.InferenceSession(model_path)
         self.initialized = True
         print("XXXXX  Initialization time: ", time()-start)
 
@@ -108,16 +109,20 @@ class ModelHandler(BaseHandler):
         """
         start = time()
         # Do some inference call to engine here and return output
-        model_output = self.model.forward(model_input)
+        model_output = self.ort_session.run(
+                        None,
+                        {"images": model_input.numpy().astype(np.float32)},
+                    )
         print("XXXXX  Inference time: ", time()-start)
-        return model_output
+        print(len(model_output))
+        print(type(model_output))
+        return torch.Tensor(model_output)
 
 
     def postprocess(self, inference_output):
         start = time()
         # perform NMS (nonmax suppression) on model outputs
         pred = non_max_suppression(inference_output, conf_thres=self.min_conf_thresh, iou_thres=.45)
-
         # initialize empty list of detections for each image
         detections = [[] for _ in range(len(pred))]
 
@@ -126,7 +131,10 @@ class ModelHandler(BaseHandler):
                 # we need to store the coordinates with respect to the original image size
                 # not the resized image from letterbox. images are typically wider than tall
                 # so usually the y axis only gets resized by letterbox.
-                det[:4] = scale_boxes(self.letterbox_shape, det[:4], self.original_img_shape)
+                if self.dw_dh[0] == 0 and self.dw_dh[1] == 0:
+                    det[:4] = scale_boxes(self.letterbox_shape, det[:4], self.original_img_shape)
+                else:
+                    det[:4] = scale_boxes(self.letterbox_shape, det[:4], self.original_img_shape, (self.ratio, self.dw_dh))
                 # x1,y1,x2,y2 in normalized image coordinates (i.e. 0.0-1.0)
                 xyxy = [det[0] / self.original_img_shape[1],
                         det[1] / self.original_img_shape[0],
