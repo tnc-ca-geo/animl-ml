@@ -1,13 +1,9 @@
 #!/bin/bash
 
-# Download megadetector model files
+# Download mira model files
 # After running get-models.sh, the models/ directory should look like:
 #
 # models
-#   ├─ megadetector
-#       └─ megadetector
-#           └─ 4
-#               └─ saved_model.pb
 #   ├─ mira-large
 #       └─ code
 #           └─ inference.py
@@ -32,12 +28,6 @@
 bucket="s3://animl-model-zoo"
 modelPath="$PWD/models"
 
-# Microsoft Megadetector v4
-megadetectorDir="megadetector"
-megadetectorModel="megadetector"
-megadetectorZipFile="megadetector.zip"
-megadetectorPbPath="$modelPath/$megadetectorDir/megadetector/4/saved_model.pb"
-
 # Mira large
 miraLargeDir="mira-large"
 miraLargeModel="mira-large"
@@ -51,18 +41,6 @@ miraSmallZipFile="mira-small.zip"
 miraSmallPbPath="$modelPath/$miraSmallDir/mira-small/1/saved_model.pb"
 
 echo -e "Getting Animl models..."
-
-if [[ -f $megadetectorPbPath ]]; then
-  echo -e "$megadetectorModel model file already exits, skipping"
-else 
-  echo -e "Downloading and unzipping Megadetector v4..."
-  cd $modelPath/$megadetectorDir
-  aws s3 cp $bucket/$megadetectorZipFile ./ && \
-  unzip $megadetectorZipFile && rm $megadetectorZipFile && \
-  cd ..
-  find . -name "*.DS_Store" -type f -delete
-  echo -e "Success"
-fi 
 
 if [[ -f $miraLargePbPath ]]; then
   echo -e "$miraLargeModel model file already exits, skipping"

@@ -2,21 +2,30 @@
 """
 from ts.torch_handler.base_handler import BaseHandler
 import numpy as np
+import cv2
 import base64
 import torch
 import torchvision.transforms as tf
 import torchvision
 import io
 from PIL import Image
-
+from io import BytesIO
+from typing import Union
+import os
+np.random.seed(42)
+torch.manual_seed(42)
+os.environ["PYTHONHASHSEED"] = "42"
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+torch.set_num_threads(1)
 
 class ModelHandler(BaseHandler):
     """
     A custom model handler implementation.
     """
 
-    img_size = 640
-    min_conf_thresh = 0.001
+    img_size = 1280
+    min_conf_thresh = 0.0005
     """Image size (px). Images will be resized to this resolution before inference.
     """
 
@@ -29,65 +38,98 @@ class ModelHandler(BaseHandler):
         Args:
             data (List): Input data from the request in the form of a list of image tensors.
         Returns:
-            Tensor: single Tensor of shape [BATCH_SIZE, 3, IMG_SIZE, IMG_SIZE]
+            Tensor: single Tensor of shape [BATCH_SIZE=1, 3, IMG_SIZE, IMG_SIZE]
         """
-        images = []
-
-        transform = tf.Compose([
-            tf.ToTensor(),
-            tf.Resize((self.img_size, self.img_size))
-        ])
 
         # load images
         # taken from https://github.com/pytorch/serve/blob/master/ts/torch_handler/vision_handler.py
-
+        
         # handle if images are given in base64, etc.
-        for row in data:
-            # Compat layer: normally the envelope should just return the data
-            # directly, but older versions of Torchserve didn't have envelope.
-            image = row.get("data") or row.get("body")
-            if isinstance(image, str):
-                # if the image is a string of bytesarray.
-                image = base64.b64decode(image)
-
+        row = data[0]
+        # Compat layer: normally the envelope should just return the data
+        # directly, but older versions of Torchserve didn't have envelope.
+        image = row.get("data") or row.get("body")
+        if isinstance(image, str):
+            # if the image is a string of bytesarray.
+            image = base64.b64decode(image)
+        if isinstance(image, (bytearray, bytes)):
             # If the image is sent as bytesarray
-            if isinstance(image, (bytearray, bytes)):
-                image = Image.open(io.BytesIO(image))
-            else:
-                # if the image is a list
-                image = torch.FloatTensor(image)
+            image = load_image(io.BytesIO(image))
+        else:
+            print("not a bytearray")
+            assert False
+        # force convert to tensor
+        # and resize to [img_size, img_size]
+        image = np.asarray(image)
+        self.original_img_shape = image.shape
+        image, self.ratio, self.dw_dh = letterbox(image, new_shape=self.img_size,
+                    stride=64, auto=True)  # JIT requires auto=False\
+        self.letterbox_shape = image.shape
+        image = image.transpose((2, 0, 1))  # HWC to CHW; PIL Image is RGB already
+        image = np.ascontiguousarray(image)
+        image = torch.from_numpy(image)
+        image = image.to(self.device)
+        image = image.float()
+        image /= 255
+        image = torch.unsqueeze(image, 0)
+        # has shape BATCH_SIZE=1 x 3 x IMG_SIZE x IMG_SIZE
+        return image
 
-            # force convert to tensor
-            # and resize to [img_size, img_size]
-            image = transform(image)
+    def initialize(self, context):
+        """
+        Invoke by torchserve for loading a model
+        :param context: context contains model server system properties
+        :return:
+        """
 
-            images.append(image)
+        #  load the model
+        self.manifest = context.manifest
 
-        # convert list of equal-size tensors to single stacked tensor
-        # has shape BATCH_SIZE x 3 x IMG_SIZE x IMG_SIZE
-        images_tensor = torch.stack(images).to(self.device)
+        properties = context.system_properties
+        model_dir = properties.get("model_dir")
+        self.device = torch.device("cuda:" + str(properties.get("gpu_id")) if torch.cuda.is_available() else "cpu")
+        # Read model serialize/pt file
+        serialized_file = self.manifest['model']['serializedFile']
+        model_pt_path = os.path.join(model_dir, serialized_file)
+        # Model
+        self.model =torch.hub.load(model_dir, 'custom', source = "local", skip_validation=True, path=model_pt_path) 
+        self.initialized = True
 
-        return images_tensor
+    def inference(self, model_input):
+        """
+        Internal inference methods
+        :param model_input: transformed model input data
+        :return: list of inference output in NDArray
+        """
+        # Do some inference call to engine here and return output
+        model_output = self.model.forward(model_input)
+        return model_output
+
 
     def postprocess(self, inference_output):
         # perform NMS (nonmax suppression) on model outputs
-        pred = non_max_suppression(inference_output[0], conf_thres=self.min_conf_thresh, iou_thres=.45)
+        pred = non_max_suppression(inference_output, conf_thres=self.min_conf_thresh, iou_thres=.45)
 
         # initialize empty list of detections for each image
         detections = [[] for _ in range(len(pred))]
 
         for i, image_detections in enumerate(pred):  # axis 0: for each image
             for det in image_detections:  # axis 1: for each detection
+                # we need to store the coordinates with respect to the original image size
+                # not the resized image from letterbox. images are typically wider than tall
+                # so usually the y axis only gets resized by letterbox.
+                det[:4] = scale_boxes(self.letterbox_shape, det[:4], self.original_img_shape)
                 # x1,y1,x2,y2 in normalized image coordinates (i.e. 0.0-1.0)
-                xyxy = det[:4] / self.img_size
+                xyxy = [det[0] / self.original_img_shape[1],
+                        det[1] / self.original_img_shape[0],
+                        det[2] / self.original_img_shape[1],
+                        det[3] / self.original_img_shape[0]]
+
                 # confidence value
                 conf = det[4].item()
                 # index of predicted class
                 class_idx = int(det[5].item())
                 # get label of predicted class
-                # if missing, then just return class idx
-                label = self.mapping.get(str(class_idx), class_idx)
-
                 detections[i].append({
                     "x1": xyxy[0].item(),
                     "y1": xyxy[1].item(),
@@ -99,6 +141,18 @@ class ModelHandler(BaseHandler):
 
         # format each detection
         return detections
+    
+    def handle(self, data, context):
+        """
+        Invoke by TorchServe for prediction request.
+        Do pre-processing of data, prediction using model and postprocessing of prediction output
+        :param data: Input data for prediction
+        :param context: Initial context contains model server system properties.
+        :return: prediction output
+        """
+        model_input = self.preprocess(data)
+        model_output = self.inference(model_input)
+        return self.postprocess(model_output)
 
 
 def non_max_suppression(prediction, conf_thres=0.25, iou_thres=0.45, classes=None, agnostic=False, multi_label=False,
@@ -205,3 +259,141 @@ def xywh2xyxy(x):
     y[:, 2] = x[:, 0] + x[:, 2] / 2  # bottom right x
     y[:, 3] = x[:, 1] + x[:, 3] / 2  # bottom right y
     return y
+
+def letterbox(im, new_shape=(640, 640), color=(114, 114, 114), auto=True, scaleFill=False, scaleup=True, stride=32):
+    # Resize and pad image while meeting stride-multiple constraints
+    shape = im.shape[:2]  # current shape [height, width]
+    if isinstance(new_shape, int):
+        new_shape = (new_shape, new_shape)
+
+    # Scale ratio (new / old)
+    r = min(new_shape[0] / shape[0], new_shape[1] / shape[1])
+    if not scaleup:  # only scale down, do not scale up (for better val mAP)
+        r = min(r, 1.0)
+    # Compute padding
+    ratio = r, r  # width, height ratios
+    new_unpad = int(round(shape[1] * r)), int(round(shape[0] * r))
+    dw, dh = new_shape[1] - new_unpad[0], new_shape[0] - new_unpad[1]  # wh padding
+    if auto:  # minimum rectangle
+        dw, dh = np.mod(dw, stride), np.mod(dh, stride)  # wh padding
+    elif scaleFill:  # stretch
+        dw, dh = 0.0, 0.0
+        new_unpad = (new_shape[1], new_shape[0])
+        ratio = new_shape[1] / shape[1], new_shape[0] / shape[0]  # width, height ratios
+
+    dw /= 2  # divide padding into 2 sides
+    dh /= 2
+    if shape[::-1] != new_unpad:  # resize
+        im = cv2.resize(im, new_unpad, interpolation=cv2.INTER_LINEAR)
+    top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
+    left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
+    im = cv2.copyMakeBorder(im, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)  # add border
+    return im, ratio, (dw, dh)
+
+def open_image(input_file: Union[str, BytesIO]) -> Image:
+    """
+    Opens an image in binary format using PIL.Image and converts to RGB mode.
+    
+    Supports local files or URLs.
+    This operation is lazy; image will not be actually loaded until the first
+    operation that needs to load it (for example, resizing), so file opening
+    errors can show up later.
+    Args:
+        input_file: str or BytesIO, either a path to an image file (anything
+            that PIL can open), or an image as a stream of bytes
+    Returns:
+        an PIL image object in RGB mode
+    """
+    if (isinstance(input_file, str)
+            and input_file.startswith(('http://', 'https://'))):
+        try:
+            response = requests.get(input_file)
+        except Exception as e:
+            print(f'Error retrieving image {input_file}: {e}')
+            success = False
+            if e.__class__.__name__ in error_names_for_retry:
+                for i_retry in range(0,n_retries):
+                    try:
+                        time.sleep(retry_sleep_time)
+                        response = requests.get(input_file)        
+                    except Exception as e:
+                        print(f'Error retrieving image {input_file} on retry {i_retry}: {e}')
+                        continue
+                    print('Succeeded on retry {}'.format(i_retry))
+                    success = True
+                    break
+            if not success:
+                raise
+        try:
+            image = Image.open(BytesIO(response.content))
+        except Exception as e:
+            print(f'Error opening image {input_file}: {e}')
+            raise
+
+    else:
+        print("trying to open image")
+        image = Image.open(input_file)
+    if image.mode not in ('RGBA', 'RGB', 'L', 'I;16'):
+        raise AttributeError(
+            f'Image {input_file} uses unsupported mode {image.mode}')
+    if image.mode == 'RGBA' or image.mode == 'L':
+        print("trying to convert image")
+        # PIL.Image.convert() returns a converted copy of this image
+        image = image.convert(mode='RGB')
+
+    # Alter orientation as needed according to EXIF tag 0x112 (274) for Orientation
+    #
+    # https://gist.github.com/dangtrinhnt/a577ece4cbe5364aad28
+    # https://www.media.mit.edu/pia/Research/deepview/exif.html
+    #
+    try:
+        exif = image._getexif()
+        orientation: int = exif.get(274, None)  # 274 is the key for the Orientation field
+        if orientation is not None and orientation in IMAGE_ROTATIONS:
+            image = image.rotate(IMAGE_ROTATIONS[orientation], expand=True)  # returns a rotated copy
+    except Exception:
+        pass
+
+    return image
+
+
+def load_image(input_file: Union[str, BytesIO]) -> Image:
+    """
+    Loads the image at input_file as a PIL Image into memory.
+    Image.open() used in open_image() is lazy and errors will occur downstream
+    if not explicitly loaded.
+    Args:
+        input_file: str or BytesIO, either a path to an image file (anything
+            that PIL can open), or an image as a stream of bytes
+    Returns: PIL.Image.Image, in RGB mode
+    """
+    image = open_image(input_file)
+    image.load()
+    return image
+
+#from yolov5
+def scale_boxes(img1_shape, boxes, img0_shape, ratio_pad=None):
+    # Rescale boxes (xyxy) from img1_shape to img0_shape
+    if ratio_pad is None:  # calculate from img0_shape
+        gain = min(img1_shape[0] / img0_shape[0], img1_shape[1] / img0_shape[1])  # gain  = old / new
+        pad = (img1_shape[1] - img0_shape[1] * gain) / 2, (img1_shape[0] - img0_shape[0] * gain) / 2  # wh padding
+    else:
+        gain = ratio_pad[0][0]
+        pad = ratio_pad[1]
+    boxes[..., [0, 2]] -= pad[0]  # x padding
+    boxes[..., [1, 3]] -= pad[1]  # y padding
+    boxes[..., :4] /= gain
+    clip_boxes(boxes, img0_shape)
+    return boxes
+
+def clip_boxes(boxes, shape):
+    # Clip boxes (xyxy) to image shape (height, width)
+    if isinstance(boxes, torch.Tensor):  # faster individually
+        boxes[..., 0].clamp_(0, shape[1])  # x1
+        boxes[..., 1].clamp_(0, shape[0])  # y1
+        boxes[..., 2].clamp_(0, shape[1])  # x2
+        boxes[..., 3].clamp_(0, shape[0])  # y2
+
+    else:  # np.array (faster grouped)
+        boxes[..., [0, 2]] = boxes[..., [0, 2]].clip(0, shape[1])  # x1, x2
+        boxes[..., [1, 3]] = boxes[..., [1, 3]].clip(0, shape[0])  # y1, y2
