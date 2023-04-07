@@ -21,17 +21,17 @@ The following instructions are for deploying the PyTorch model to a Sagemaker Se
 ## Download weights model
 
 From this directory, run:
-```
+```bash
 aws s3 sync s3://animl-model-zoo/mirav2/ model-weights
 ```
-Note: 'ckpt_18_compiled.pt' is a compiled torchscript model, but it was compiled on GPU so unlikely to work on Sagemaker Serverless endpoints, which are CPU only. For now we only really care about the un-compiled weights in 'ckpt_18.pt'.
+> **NOTE:** 'ckpt_18_compiled.pt' is a compiled torchscript model, but it was compiled on GPU so unlikely to work on Sagemaker Serverless endpoints, which are CPU only. For now we only really care about the un-compiled weights in 'ckpt_18.pt'.
 
 Also, if there's a 'mira_compiled_cpu.pt' file present, you can skip the next step and jump to creating the `.mar` file.
 
 ## Load the weights into PyTorch locally and re-compile to torchserve for CPU
 
 Start the `venv` located one level above the root directory of this project (or create one if one doesn't exist). Next, install the [PyTorch Efficientnet implementaion](https://github.com/lukemelas/EfficientNet-PyTorch) that was used during training with: 
-```
+```bash
 pip install efficientnet_pytorch
 ```
 
@@ -42,16 +42,16 @@ Note for others using these steps to deploy a different model: the versions of `
 
 ## Install and run `torch-model-archiver` to generate .mar file
 
-Full documentation for creating a torchserve model archive (.mar) file can be found [here](docs here: https://github.com/pytorch/serve/tree/master/model-archiver#creating-a-model-archive).
+Full documentation for creating a torchserve model archive (.mar) file can be found [here](https://github.com/pytorch/serve/tree/master/model-archiver#creating-a-model-archive).
 
-Note: because we want to crop images to their respective bounding boxes and resize them to match the resizing and transformations that were performed during training, we created a [custom handler](https://github.com/pytorch/serve/blob/master/docs/custom_service.md#custom-handlers). However, if you are trying to follow these steps to deploy a different image classifier and don't need to do any pre-processing, passing in one of the [default handlers](https://github.com/pytorch/serve/blob/master/docs/default_handlers.md) (i.e. ` --handler image_classifier`) to the `torch-model-archiver` works fine too.
+> **NOTE:** because we want to crop images to their respective bounding boxes and resize them to match the resizing and transformations that were performed during training, we created a [custom handler](https://github.com/pytorch/serve/blob/master/docs/custom_service.md#custom-handlers). However, if you are trying to follow these steps to deploy a different image classifier and don't need to do any pre-processing, passing in one of the [default handlers](https://github.com/pytorch/serve/blob/master/docs/default_handlers.md) (i.e. ` --handler image_classifier`) to the `torch-model-archiver` works fine as an alternative.
 
-Run
+Run:
 ```bash
 pip install torch-model-archiver
 ```
 
-then
+to install dependencies, then the following to create the archive:
 ```bash
 torch-model-archiver --model-name mira --version 2.0.0 --serialized-file model-weights/mira_compiled_cpu.pt --extra-files index_to_name.json --handler mirav2_handler.py
 mv mira.mar model_store/mira.mar
@@ -61,21 +61,21 @@ mv mira.mar model_store/mira.mar
 We can now locally test this model prior to deploying.
 
 Build the Docker image (you only have to do this once or if you've modified the Dockerfile):
-```
+```bash
 docker build -t torchserve-mirav2:0.5.3-cpu .
 ```
 
 Run it:
-```
+```bash
 bash docker_mirav2.sh $(pwd)/model_store
 ```
 
-A couple of things need to happen to test the endpoint locally via cURL. To build the payload we need to download an image to test (preferably from Animl because we likely have bounding boxes for it), read the test image into a shell environment as a base64 string, then save the string to a bash variable. If the image came from Animl, you'll also want to look up test object's corresponding bounding box in the Animl database and save that to a variable, and then compose the JSON payload with `jq`(you may need to [download](https://stedolan.github.io/jq/download/) first) and send that to our torchserve endpoint via cURL. 
+A couple of things need to happen to test the endpoint locally via cURL. To build the payload we need to download an image to test (preferably from Animl because we likely already have bounding boxes for it in the correct format), read the test image into a shell environment as a base64 string, then save the string to a bash variable. If the image came from Animl and has an object in it, you'll also want to look up the test object's corresponding bounding box in the Animl database and save that to a variable, and then compose the JSON payload with [jq](https://stedolan.github.io/jq/download/) and finally send that payload to our torchserve endpoint via cURL. 
 
-The steps look like this (on a Mac) - just be sure to modify the variables for the image path and bounding box you're testing. 
+The steps look like this (on a Mac). Just be sure to modify the variables for the image path and bounding box you're testing. 
 
 1. Build payload
-```
+```bash
 IMG_STRING=$(base64 -i ~/Downloads/rodent-full-size.jpg)
 BBOX=[0.3312353789806366,0.22853891551494598,0.4267701208591461,0.436643123626709]
 PAYLOAD=$( jq -n \
@@ -86,15 +86,15 @@ PAYLOAD=$( jq -n \
 ```
 
 2. Invoke endpoint with payload:
-```
+```bash
 curl -i http://127.0.0.1:8080/invocations -F body=$PAYLOAD
 ```
 
-NOTE: the local URL can also be `http://127.0.0.1:8080/predictions/mira`, but to test the endpoint that is queried during production (i.e. the sagemaker endpoint, which uses the configurations set in deployment/config.properties to adjust threads, worker count, and other container parameters), use `/invocations`.
+> **NOTE:** the model can also be queried at `http://127.0.0.1:8080/predictions/mira`, but to test the endpoint that is queried during production (i.e. the sagemaker endpoint, which uses the configurations set in deployment/config.properties to adjust threads, worker count, and other container parameters), use `/invocations`.
 
 The result should look something like:
 
-```
+```json
 {
   "rodent": 1.0,
   "bird": 2.4474083870629215e-10,
@@ -110,8 +110,9 @@ The result should look something like:
 Once you have run the model archiver step above, you're ready to upload that model to s3 so it can be deployed to a serverless inference endpoint!
 
 Run the following to copy the model to the appropriate s3 bucket where pytorch and tensorflow models (for MIRAv1) are stored:
-
-`aws s3 cp model_store/mira.mar s3://animl-model-zoo/`
+```bash
+aws s3 cp model_store/mira.mar s3://animl-model-zoo/
+```
 
 You'll also need to push the locally built docker image to the ECR repository. Since the images are large, it is fastest to do this from a sagemaker notebook instance in the mirav2_deploy.ipynb.
 
