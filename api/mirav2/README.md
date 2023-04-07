@@ -1,13 +1,13 @@
-# Setup Instructions - TODO: UPDATE THIS FOR MIRAv2
+# MIRAv2 Deployment Instructions
 
-MIRAv2 was trained on an efficientnet model architecture in PyTorch following the workflow described in the `classification` directory of this repo (which itself was derived from Microsoft's AI for Earth team's [Classification](https://github.com/microsoft/CameraTraps/tree/main/classification) workflow).
+MIRAv2 was trained on an efficientnet model architecture in PyTorch following the workflow described in the `/classification/` directory of this repo (which itself was derived from Microsoft's AI for Earth team's [MegaClassifier training](https://github.com/microsoft/CameraTraps/tree/main/classification) workflow).
 
-These instructions are for deploying the model to a Sagemaker Serverless Endpoint as a Torchserve container. In order to create and deploy the model archive from scratch, we need to work across two different environments:
+The following instructions are for deploying the PyTorch model to a Sagemaker Serverless Endpoint served in a Torchserve container. In order to create and deploy the model archive from scratch, we need to work across two different environments:
 
 1. your local environment, where you will:
    1. Download the model weights from s3 
    2. load the model weights into PyTorch and re-compile to torchscript for CPU (TODO: double check that this is necessary)
-   3. Install dependencies for `torch-model-archiver` and run `torch-model-archiver` to generate the .mar archive (a bundled archive that includes the torchscript-compiled model and the hander function)
+   3. Install dependencies for `torch-model-archiver` and run `torch-model-archiver` to generate the `.mar` file (a bundled archive that includes the torchscript-compiled model and the hander function)
    4. [Optionally] test the model and handler in a torchserve Docker container by building it and requesting inference locally
    5. Upload the model archive to s3
 
@@ -26,9 +26,19 @@ aws s3 sync s3://animl-model-zoo/mirav2/ model-weights
 ```
 Note: 'ckpt_18_compiled.pt' is a compiled torchscript model, but it was compiled on GPU so unlikely to work on Sagemaker Serverless endpoints, which are CPU only. For now we only really care about the un-compiled weights in 'ckpt_18.pt'.
 
+Also, if there's a 'mira_compiled_cpu.pt' file present, you can skip the next step and jump to creating the `.mar` file.
+
 ## Load the weights into PyTorch locally and re-compile to torchserve for CPU
 
-Start the `venv` located one level above the root dir of this project (or create one if one doesn't exist), and step through `mirav2_compile.ipynb`. The notebook should produce a torchscript model 'mira_compiled_cpu.pt' in the `./model-weights/` directory.
+Start the `venv` located one level above the root directory of this project (or create one if one doesn't exist). Next, install the [PyTorch Efficientnet implementaion](https://github.com/lukemelas/EfficientNet-PyTorch) that was used during training with: 
+```
+pip install efficientnet_pytorch
+```
+
+Then step through `mirav2_compile.ipynb`. The notebook should produce a torchscript model 'mira_compiled_cpu.pt' in the `./model-weights/` directory.
+
+Note for others using these steps to deploy a different model: the versions of `torch` and `torchvision` that you pin in your `Dockerfile` used for serving must match the versions you use when compiling the model to torchscript. To check which versions you're using in your venv use `pip freeze` and to bump the versions up (or down) use `pip install --upgrade` (e.g. `pip install --upgrade torchvision==0.11.1`).
+
 
 ## Install and run `torch-model-archiver` to generate .mar file
 
