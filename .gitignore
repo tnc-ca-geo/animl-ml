@@ -128,8 +128,16 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# pb files
+# TF and PyTorch model files
 *.pb
+*.pt
+
+# ONNX compiled models
+*.onnxlib
+*.onnx
+
+# Torchserve model archives
+*.mar
 
 # ignore models
 models/*/*
