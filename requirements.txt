@@ -19,7 +19,7 @@ google-pasta==0.2.0
 idna==2.9
 importlib-metadata==4.13.0
 ipykernel==5.3.4
-ipython==7.19.0
+ipython==8.10.0
 ipython-genutils==0.2.0
 isodate==0.6.0
 jedi==0.17.2
