@@ -51,7 +51,7 @@ pip install torch-model-archiver
 to install dependencies, then the following to create the archive:
 ```bash
 torch-model-archiver --model-name nzdoc --version 1.0.0 --serialized-file model-weights/nzdoc_compiled_cpu.pt --extra-files index_to_name.json --handler nzdoc_handler.py
-mv nzdoc.mar model_store/nzdoc.mar
+mv nzdoc.mar model-store/nzdoc.mar
 ```
 
 ## Locally build, serve, and test the torchscript model with torchserve
@@ -64,7 +64,7 @@ docker build -t torchserve-nzdoc:latest-cpu .
 
 Run it:
 ```bash
-bash docker_nzdoc.sh $(pwd)/model_store
+bash docker_nzdoc.sh $(pwd)/model-store
 ```
 
 A couple of things need to happen to test the endpoint locally via cURL. To build the payload we need to download an image to test (preferably from Animl because we likely already have bounding boxes for it in the correct format), read the test image into a shell environment as a base64 string, then save the string to a bash variable. If the image came from Animl and has an object in it, you'll also want to look up the test object's corresponding bounding box in the Animl database and save that to a variable, and then compose the JSON payload with [jq](https://stedolan.github.io/jq/download/) and finally send that payload to our torchserve endpoint via cURL. 
@@ -107,7 +107,7 @@ Once you have run the model archiver step above, you're ready to upload that mod
 
 Run the following to copy the model to the appropriate s3 bucket where pytorch and tensorflow models (for MIRAv1) are stored:
 ```bash
-aws s3 cp model_store/nzdoc.mar s3://animl-model-zoo/
+aws s3 cp model-store/nzdoc.mar s3://animl-model-zoo/nzdoc/
 ```
 
 You'll also need to push the locally built docker image to the ECR repository. Since the images are large, it is fastest to do this from a sagemaker notebook instance in the nzdoc_deploy.ipynb.
