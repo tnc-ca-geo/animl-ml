@@ -5,8 +5,8 @@ import numpy as np
 import cv2
 import base64
 import torch
-import onnx
-import onnxruntime as ort
+# import onnx
+# import onnxruntime as ort
 import io
 import torchvision
 import torch
@@ -81,42 +81,42 @@ class ModelHandler(BaseHandler):
         # has shape BATCH_SIZE=1 x 3 x IMG_SIZE x IMG_SIZE
         return image
 
-    def initialize(self, context):
-        """
-        Invoke by torchserve for loading a model
-        :param context: context contains model server system properties
-        :return:
-        """
-        start = time()
-        #  load the model
-        self.manifest = context.manifest
-        properties = context.system_properties
-        model_dir = properties.get("model_dir")
-        self.device = torch.device("cuda:" + str(properties.get("gpu_id")) if torch.cuda.is_available() else "cpu")
-        # Read onnx file
-        serialized_file = self.manifest['model']['serializedFile']
-        model_path = os.path.join(model_dir, serialized_file)
-        # Model
-        self.ort_session = ort.InferenceSession(model_path)
-        self.initialized = True
-        print("XXXXX  Initialization time: ", time()-start)
+    # def initialize(self, context):
+    #     """
+    #     Invoke by torchserve for loading a model
+    #     :param context: context contains model server system properties
+    #     :return:
+    #     """
+    #     start = time()
+    #     #  load the model
+    #     self.manifest = context.manifest
+    #     properties = context.system_properties
+    #     model_dir = properties.get("model_dir")
+    #     self.device = torch.device("cuda:" + str(properties.get("gpu_id")) if torch.cuda.is_available() else "cpu")
+    #     # Read onnx file
+    #     serialized_file = self.manifest['model']['serializedFile']
+    #     model_path = os.path.join(model_dir, serialized_file)
+    #     # Model
+    #     self.ort_session = ort.InferenceSession(model_path)
+    #     self.initialized = True
+    #     print("XXXXX  Initialization time: ", time()-start)
 
-    def inference(self, model_input):
-        """
-        Internal inference methods
-        :param model_input: transformed model input data
-        :return: list of inference output in NDArray
-        """
-        start = time()
-        # Do some inference call to engine here and return output
-        model_output = self.ort_session.run(
-                        None,
-                        {"images": model_input.numpy().astype(np.float32)},
-                    )
-        print("XXXXX  Inference time: ", time()-start)
-        print(len(model_output))
-        print(type(model_output))
-        return torch.Tensor(model_output)
+    # def inference(self, model_input):
+    #     """
+    #     Internal inference methods
+    #     :param model_input: transformed model input data
+    #     :return: list of inference output in NDArray
+    #     """
+    #     start = time()
+    #     # Do some inference call to engine here and return output
+    #     model_output = self.ort_session.run(
+    #                     None,
+    #                     {"images": model_input.numpy().astype(np.float32)},
+    #                 )
+    #     print("XXXXX  Inference time: ", time()-start)
+    #     print(len(model_output))
+    #     print(type(model_output))
+    #     return torch.Tensor(model_output)
 
 
     def postprocess(self, inference_output):
@@ -169,6 +169,7 @@ class ModelHandler(BaseHandler):
         """
         model_input = self.preprocess(data)
         model_output = self.inference(model_input)
+        model_output = model_output[0] # for some reason the ipex model returns tuple with only one element
         return self.postprocess(model_output)
 
 
@@ -178,7 +179,6 @@ def non_max_suppression(prediction, conf_thres=0.25, iou_thres=0.45, classes=Non
     Returns:
          list of detections, on (n,6) tensor per image [xyxy, conf, cls]
     """
-
     nc = prediction.shape[2] - 5  # number of classes
     xc = prediction[..., 4] > conf_thres  # candidates
 
