@@ -20,6 +20,7 @@ From this directory, run:
 ```
 aws s3 sync s3://animl-model-zoo/mdv5-weights-models/ model-weights
 ```
+TODO revise readme to cover using torchscript + Intel IPEX if it works out faster than ONNX
 
 If you want to quickly run model inference outside of the deployment environment without post processing steps, you can use the ONNX model file.
 
@@ -35,13 +36,13 @@ conda activate mdv5a
 pip install "gitpython" "ipython" "matplotlib>=3.2.2" "numpy==1.23.4" "opencv-python==4.6.0.66" \
 "Pillow==9.2.0" "psutil" "PyYAML>=5.3.1" "requests>=2.23.0" "scipy==1.9.3" "thop>=0.1.1" \
 "torch==1.10.0" "torchvision==0.11.1" "tqdm>=4.64.0" "tensorboard>=2.4.1" "pandas>=1.1.4" \
-"seaborn>=0.11.0" "setuptools>=65.5.1" "onnxruntime==1.14.1" "onnx==1.13.1", "torch-model-archiver", "httpx"
+"seaborn>=0.11.0" "setuptools>=65.5.1" "intel-extension-for-pytorch", "torch-model-archiver", "httpx"
 ```
 then, run the export step
 
 ```
-python yolov5/export.py --imgsz '(960,1280)' --weights model-weights/md_v5a.0.0.pt --include onnx
-mv model-weights/md_v5a.0.0.onnx model-weights/md_v5a.0.0.960.1280.onnx
+python yolov5/export.py --imgsz '(960,1280)' --weights model-weights/md_v5a.0.0.pt --include torchscript
+mv model-weights/md_v5a.0.0.torchscript model-weights/md_v5a.0.0.960.1280.torchscript
 ```
 
 Note, we are using the yolov5 source when compiling the model for deployment. This is [yolov5 commit hash 5c91da](https://github.com/ultralytics/yolov5/tree/5c91daeaecaeca709b8b6d13bd571d068fdbd003)
@@ -55,7 +56,7 @@ this will create models/megadetectorv5/md_v5a.0.0.onnx and move it to the correc
 `pip install torch-model-archiver` then,
 
 ```
-torch-model-archiver --model-name mdv5a --version 1.0.0 --serialized-file model-weights/md_v5a.0.0.960.1280.onnx --extra-files index_to_name.json --handler mdv5_handler.py
+torch-model-archiver --model-name mdv5a --version 1.0.0 --serialized-file model-weights/md_v5a.0.0.960.1280.torchscript --extra-files index_to_name.json --handler mdv5_handler.py
 mv mdv5a.mar model_store/mdv5a.mar
 ```
 
