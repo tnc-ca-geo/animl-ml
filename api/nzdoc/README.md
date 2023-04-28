@@ -1,4 +1,4 @@
-# NZDOC Deployment Instructions - TODO: UPDATE
+# NZDOC Deployment Instructions
 
 NZDOC was trained on an efficientnet v2 model architecture in PyTorch.
 
