@@ -35,7 +35,7 @@ conda activate mdv5a
 pip install "gitpython" "ipython" "matplotlib>=3.2.2" "numpy==1.23.4" "opencv-python==4.6.0.66" \
 "Pillow==9.2.0" "psutil" "PyYAML>=5.3.1" "requests>=2.23.0" "scipy==1.9.3" "thop>=0.1.1" \
 "torch==1.10.0" "torchvision==0.11.1" "tqdm>=4.64.0" "tensorboard>=2.4.1" "pandas>=1.1.4" \
-"seaborn>=0.11.0" "setuptools>=65.5.1" "onnxruntime==1.14.1" "onnx==1.13.1", "torch-model-archiver", "httpx"
+"seaborn>=0.11.0" "setuptools>=65.5.1" "onnxruntime==1.14.1" "onnx==1.13.1" "torch-model-archiver" "httpx"
 ```
 then, run the export step
 
@@ -67,7 +67,7 @@ We can locally test this model prior to deploying.
 
 ```
 docker build -t torchserve-mdv5a:0.5.3-cpu .
-bash docker_mdv5.sh $(pwd)/model_store
+bash docker_mdv5a.sh $(pwd)/model_store
 ```
 
 ## Return prediction in normalized coordinates with category integer and confidence score
