@@ -8,7 +8,18 @@ Guidance for training classifiers using Animl data.
 
 This workflow relies heavily on the [classifier training](https://github.com/agentmorris/MegaDetector/tree/main/classification) instructions and code originally published by Microsoft's AI for Earth Team but now maintained by Dan Morris. The instructions below simply provide guidance on  exporting images and annotations from Animl and shoe-horning them into the AI 4 Earth team's classifier training workflow. As such, we highly recommend referencing the `/MegaDetector/classification` README.md in conjunction with these instructions, as they go into much more detail about each of the steps outlined here.
 
-#### Clone relevant repos and build Conda environments
+#### Install dependencies
+```bash
+### make directory for downloads (if there isn't one) and cd into it to downolad tars
+mdkir ~/Downloads
+
+### install anaconda 
+wget https://repo.anaconda.com/archive/Anaconda3-2022.10-Linux-x86_64.sh
+bash Anaconda3-2022.10-Linux-x86_64.sh
+source .bashrc
+```
+
+#### Clone relevant repos
 
 Clone the following repos:
 - [agentmorris/MegaDetector](https://github.com/agentmorris/MegaDetector)
@@ -16,14 +27,38 @@ Clone the following repos:
 - [animl-analytics](https://github.com/tnc-ca-geo/animl-analytics)
 - and this repo ([animl-ml](https://github.com/tnc-ca-geo/animl-ml))
 
-Next, navigate to `~/MegaDetector/` project root directory and run `conda env update -f environment-classifier.yml --prune` to build the `cameratraps-classifier` Conda environment, which is the primary one we'll be using.
+#### Build and activate Conda environment
 
-Finally, activate the `cameratraps-classifier` env and install `azure-cosmos` dependency (it's required but seemed to be missing from the env):
-
-```
+```bash
+conda create -n cameratraps-classifier
+conda env update -f ~/animl-ml/environment-classifier.yml --prune
 conda activate cameratraps-classifier
+```
+
+Finally, install `azure-cosmos` dependency (it's required but seemed to be missing from the env):
+
+```bash
 conda install -n cameratraps-classifier -c conda-forge azure-cosmos
 ```
+
+#### Verify CUDA availability
+```bash
+### verifying that CUDA is available (and dealing with the case where it isn't) --parallel computing platform 
+python ~/MegaDetector/sandbox/torch_test.py
+
+### If CUDA isn't available (the above command returned `CUDA available: False`), please execute the following step:
+pip uninstall torch torchvision
+conda install pytorch=1.10.1 torchvision=0.11.2 -c pytorch
+```
+
+#### Optional steps for performance gimpimprovementsroains
+```bash
+### Optional steps to make classification faster in Linux
+conda install -c conda-forge accimage
+pip uninstall -y pillow
+pip install pillow-simd
+```
+
 
 #### Add additional directories
 
@@ -36,7 +71,7 @@ animl-analytics/                # animl-analytics repo (utilities for exporting 
 
 animl-ml/                       # This repo, contains Animl-specific utilities
 
-CameraTraps/                    # Microsoft's CameraTraps repo
+MegaDetector/                   # MegaDetector repo
     classification/
         BASE_LOGDIR/            # classification dataset and splits
             LOGDIR/             # logs and checkpoints from a single training run
@@ -60,15 +95,15 @@ images/                         # local directory to save full-size images
 #### Setup Env variables
 The following environment variables are useful to have in `.bashrc`:
 
-```bash
+```
 # Python development
-export PYTHONPATH="/home/<user>/CameraTraps:/home/<user>/ai4eutils"
+export PYTHONPATH="/home/<user>/MegaDetector:/home/<user>/ai4eutils"
 export MYPYPATH=$PYTHONPATH
 ```
 
 It's also helpful to set a `$BASE_LOGDIR` variable for the session:
-```bash
-export BASE_LOGDIR=/home/studio-lab-user/CameraTraps/classification/BASE_LOGDIR
+```
+export BASE_LOGDIR=/home/<user>/MegaDetector/classification/BASE_LOGDIR
 ```
 
 ### Export data from Animl and load into SageMaker Studio Lab environment
