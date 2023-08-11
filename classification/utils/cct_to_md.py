@@ -71,7 +71,7 @@ def cct_to_md(input_filename,output_filename=None):
     for im in tqdm(d['images']):
         
         im_out = {}
-        im_out['file'] = im['original_relative_path']
+        im_out['file'] = im['file_name']
         im_out['location'] = im['location']
         im_out['id'] = im['id']
         

@@ -59,7 +59,6 @@ pip uninstall -y pillow
 pip install pillow-simd
 ```
 
-
 #### Add additional directories
 
 Add additional directories (`~/classifier-training`, `~/images`, `~/crops`, etc.) so that the contents of your `home/` directory matches the following structure:
@@ -106,12 +105,12 @@ It's also helpful to set a `$BASE_LOGDIR` variable for the session:
 export BASE_LOGDIR=/home/<user>/MegaDetector/classification/BASE_LOGDIR
 ```
 
-### Export data from Animl and load into SageMaker Studio Lab environment
+### Export annotations from Animl and downlaod image files
 This will be a two step process:
 1. Export annotations and image metadata as COCO for Camera Traps .json document:
-  - TODO: link to documentation on how to do that
-  - rename file to `<dataset_name>_cct.json` and upload to `~/classifier-training/mdcache/v5.0b/`
-2. Copy images listed in `<dataset_name>_cct.json` from S3 to SageMaker env:
+  - documentation on how to export annotations to COCO for Camera Traps from Animl can be found [here](https://docs.animl.camera/fundamentals/export-data)
+  - rename file to `<dataset_name>_cct.json` and upload to `~/classifier-training/mdcache/v5.0a/`
+2. Copy image _files_ listed in `<dataset_name>_cct.json` from S3:
   - Make sure you have AWS credentials to read from the `animl-images-archive-prod` bucket
   - Install AWS CLI , boto3, and configure with your AWS credentials (NOTE: creds must be stored in a named profile called `animl`):
   ```bash
@@ -121,10 +120,27 @@ This will be a two step process:
   ```
   - To download all the images referenced in the cct.json file, navigate to `~/animl-analytics/` and run:
   ```bash
-  python utils/download_images.py \
-   --coco-file  ~/classifier-training/mdcache/v5.0b/<dataset_name>_cct.json\
-   --output-dir ~/images/<dataset_name>
+  python utils/download_images.py --coco-file  ~/classifier-training/mdcache/v5.0a/<dataset_name>_cct.json --output-dir ~/images/<dataset_name>
   ```
+
+### Download annotations and images from LILA
+1. Download AZCopy
+```bash
+### From home directory
+mkdir azcopy
+cd azcopy
+wget -O azcopy_v10.tar.gz https://aka.ms/downloadazcopy-v10-linux && tar -xf azcopy_v10.tar.gz --strip-components=1
+```
+Add newly created directory to your `$PATH` in `.bashrc`:
+```
+export PATH=/home/<user>/azcopy:$PATH
+```
+
+2. Run `download_lila_subset.py`
+
+### Clean and combine Animl and LILA datasets into single COCO file
+Launch and step through the steps in the `clean_and_combine_datasets.ipynb`. 
+
 
 ### Convert exported COCO file to MegaDetector results format
 Some of the following steps expect the image annotations to be in the same [format](https://github.com/microsoft/CameraTraps/tree/main/api/batch_processing/#batch-processing-api-output-format) that MegaDetector outputs after processing a batch of images. To convert the COCO for Cameratraps file that we exported from Animl to a MegaDetector results file, navigate to the `/home/studio-lab-user/` directory and run:
