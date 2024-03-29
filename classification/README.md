@@ -20,32 +20,33 @@ source .bashrc
 #### Clone relevant repos
 
 Clone the following repos:
-- [agentmorris/MegaDetector](https://github.com/agentmorris/MegaDetector) /*TODO: do we neeed this?*/
-- [microsoft/ai4eutils](https://github.com/microsoft/ai4eutils) /*TODO: do we neeed this?*/
+- [agentmorris/MegaDetector](https://github.com/agentmorris/MegaDetector) /*TODO: do we still neeed this?*/
+<!-- - [microsoft/ai4eutils](https://github.com/microsoft/ai4eutils) /*TODO: do we still neeed this?*/ -->
 - [animl-analytics](https://github.com/tnc-ca-geo/animl-analytics)
-- and, if you haven't already, this repo: ([invasive-animal-detection](git@github.com:CV4EcologySchool/invasive-animal-detection.git))
+- and, if you haven't already, this repo: ([animl-ml](https://github.com/tnc-ca-geo/animl-ml))
 
-#### Build and activate Conda environment
-
+#### Get dependencies
+If you're remoting into a computer, it might be worth starting a tmux session for this as creating the conda environment can take a while.
+From the `/animl-ml/classification/` directory, run:
 ```bash
-conda create -n classifier
-conda env update -f ~/invasive-animal-detection/environment.yml --prune
-conda activate classifier
+conda env create -f environment-classifier.yml
+conda env update -f environment-classifier.yml --prune
+conda activate cameratraps-classifier
 ```
 
-Note: if you have issues installing pytorch from the conda `environment.yml` file (i.e., you get a warning similar to `ERROR: No matching distribution found for torch==1.8.1+cu111`), try instaling it with Pip directly: 
+Install pytorch with Pip: 
 
 ```bash
 pip install torch==1.8.1+cu111 torchvision==0.9.1+cu111 torchaudio==0.8.1 -f https://download.pytorch.org/whl/torch_stable.html
 ```
 
-If you have more trouble, try uninstalling pytorch with `conda uninstall pytorch` and/or `pip uninstall torch` and reinstalling again with the command above
+If you have trouble, try uninstalling pytorch with `conda uninstall pytorch` and/or `pip uninstall torch` and reinstalling again with the command above
 
-Finally, install `azure-cosmos` dependency (it's required but seemed to be missing from the env): /*TODO: do we neeed this?*/
+<!-- Finally, install `azure-cosmos` dependency (it's required but seemed to be missing from the env): /*TODO: do we neeed this?*/
 
 ```bash
 conda install -n cameratraps-classifier -c conda-forge azure-cosmos
-```
+``` -->
 
 #### Verify CUDA availability
 ```bash
@@ -61,24 +62,23 @@ pip install torch==1.8.1+cu111 torchvision==0.9.1+cu111 torchaudio==0.8.1 -f htt
 ```bash
 ### Optional steps to make classification faster in Linux
 conda install -c conda-forge accimage
-pip uninstall -y pillow
-pip install pillow-simd
 ```
 
 #### Add additional directories - `TODO: UPDATE` 
 
-Add `data/` subdirectory under `ias-classifier`, and add the following directories below that:
+Add `data/`, subdirectory under `classification/`, and add the following directories below that:
 ```
-invasive-animal-detection/            
+classifification/            
     data/
         interim/
         processed/
         raw/
     docs/
-    ias-classifier/
+    classifier/
     ...
 ```
 
+`TODO: not sure we need this anymore`
 Add additional directories - and sub directories listed below (`~/classifier-training`, `~/images`, `~/crops`, etc.) so that the contents of your `home/` directory matches the following structure:
 
 ```
@@ -120,20 +120,23 @@ export MYPYPATH=$PYTHONPATH
 This will be a two step process:
 1. Export annotations and image metadata as COCO for Camera Traps .json document:
   - documentation on how to export annotations to COCO for Camera Traps from Animl can be found [here](https://docs.animl.camera/fundamentals/export-data)
-  - rename file to `animl_cct.json` and upload to `~/classifier-training/animl_cct.json`
+  - rename file to `animl_cct.json` and upload to `~/animl-ml/classification/data/raw/animl/animl_cct.json` (you sahould also make additinal sub directories if they aren't yet there)
 2. Copy image _files_ listed in `<dataset_name>_cct.json` from S3:
   - Make sure you have AWS credentials to read from the `animl-images-serving-prod` bucket
   - Install AWS CLI , boto3, and configure with your AWS credentials (NOTE: creds must be stored in a named profile called `animl`):
   ```bash
-  conda install --name classifier -c anaconda boto3
-  conda install --name classifier -c conda-forge awscli
+  conda install --name cameratraps-classifier -c anaconda boto3
+  conda install --name cameratraps-classifier -c conda-forge awscli
+  conda env update --name cameratraps-classifier --file environment-classifier.yml --prune
   aws configure --profile animl
   ```
   - To download all the images referenced in the cct.json file, navigate to `~/animl-analytics/` and run:
   ```bash
-  python ~/animl-analytics/utils/download_images.py --coco-file  ~/classifier-training/animl_cct.json --output-dir ~/images/animl/
+  python ~/animl-analytics/utils/download_images.py --coco-file ~/animl-ml/classification/data/raw/animl/animl_cct.json --output-dir ~/animl-ml/classification/data/raw/animl/
   ```
 
+`TODO: generalize and test steps for downloading and including LILA data`
+`NOTE: these steps have not been tested or updated for the animl-ml/classification repo`
 ### Download Island Conservation Cameratraps metadata
 
 ```bash
