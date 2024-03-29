@@ -140,11 +140,11 @@ This will be a two step process:
 ### Download Island Conservation Cameratraps metadata
 
 ```bash
-python ./invasive-animal-detection/utils/download_lila_dataset_cct.py 
+python ./utils/download_lila_dataset_cct.py 
 ```
-### Get list of locations that have rat images in them and inspect those locations' distributions of non-rat samples
+### Get list of locations that have rat images ingit them and inspect those locations' distributions of non-rat samples
 
-Step through `invastive-animal-detection/notebooks/find_rat_locations.py`, modifying the config of `download_lila_subset.py` script according to instructions in the notebook.
+Step through `/notebooks/find_rat_locations.py`, modifying the config of `download_lila_subset.py` script according to instructions in the notebook.
 
 ### Download annotations and images from LILA
 1. Download AZCopy
@@ -177,12 +177,12 @@ To crop images to their detections' respective bounding boxes, run:
 
 ```bash
 python ./utils/crop_detections.py \
-    ./data/interim/subsample-rats/combined_cct.json \
-    ./data/processed/subsample-rats/crops \
-    --images-dir ./data/raw/images \
+    ./data/raw/animl/animl_cct.json \
+    ./data/processed/animl/crops \
+    --images-dir ./data/raw/animl \
     --crop-strategy square \
     --threads 50 \
-    --logdir  ./data/interim/subsample-rats/logs
+    --logdir  ./data/interim/animl/logs
 ```
 
 ### Create classification dataset & split crops into train/val/test sets
