@@ -20,8 +20,8 @@ source .bashrc
 #### Clone relevant repos
 
 Clone the following repos:
-- [agentmorris/MegaDetector](https://github.com/agentmorris/MegaDetector) /*TODO: do we still neeed this?*/
-<!-- - [microsoft/ai4eutils](https://github.com/microsoft/ai4eutils) /*TODO: do we still neeed this?*/ -->
+- [agentmorris/MegaDetector](https://github.com/agentmorris/MegaDetector)
+- [microsoft/ai4eutils](https://github.com/microsoft/ai4eutils)
 - [animl-analytics](https://github.com/tnc-ca-geo/animl-analytics)
 - and, if you haven't already, this repo: ([animl-ml](https://github.com/tnc-ca-geo/animl-ml))
 
@@ -186,32 +186,35 @@ python ./utils/crop_detections.py \
 ```
 
 ### Create classification dataset & split crops into train/val/test sets
-This step is well documented in the `/MegaDetector/classification` [README](https://github.com/agentmorris/MegaDetector/tree/main/classification#4-create-classification-dataset-and-split-image-crops-into-trainvaltest-sets-by-location), but some sample arguments are below:
-
-TODO: Update step instructions to reflect that we can now pass in COCO .json file instead of the `queried_image.json` file.
+Preparing a classification dataset for training involves two steps:
+1. Create a CSV file (classification_ds.csv) representing our classification dataset, where each row in this CSV represents a single training example, which is an image crop with its label. Along with this CSV file, we also create a label_index.json JSON file which defines a integer ordering over the string classification label names.
+2. Split the training examples into 3 sets (train, val, and test) based on the geographic location where the images were taken. The splits will be specified in the output `splits.json` file. The splits are created by randomly generating 10,000 different potential sets of splits, and then scoring each set based on the following criteria:
+- (a) the number of examples (labels) for each class roughly matchs the desired % for each split (e.g. 70%/20%/10%). So if we want to use 70% of the data for training, this scoring function will preference splits in which each individual class has as close to 70% of all available samples of that class as possible.
+- (b) for the val and test splits, we're also scoring the degree to which the distribution of classes within the split matches the distribution of classes across the whole dataset (i.e, trying to mimic "real-world") distributions as best we can.
+- (c) Additionally, the function preferences splits in which the number of locations in the split that class is present in is also as close to 70% of all locations that the class is present in across the whole dataset.
 
 ```bash
 python ./utils/create_classification_dataset.py \
-    ~/invasive-animal-detection/data/interim/subsample-rats \
+    ./data/interim/animl \
     --mode csv cct splits \
-    --crops-dir ./data/processed/subsample-rats/crops \
-    --cct-json  ./data/interim/subsample-rats/combined_cct.json \
+    --crops-dir ./data/processed/animl/crops \
+    --cct-json  ./data/raw/animl/animl_cct.json \
     --min-locs 6 \
     --val-frac 0.2 --test-frac 0.1 \
     --method random
 ```
 
-Just re-generate splits:
+Example args if you just want to re-generate splits:
 ```bash
-python invasive-animal-detection/utils/create_classification_dataset.py \
-    $BASE_LOGDIR/score-class-dist-2 \
+python ./utils/create_classification_dataset.py \
+    .data/interim/animl \
     --mode splits \
     --val-frac 0.2 --test-frac 0.1 \
     --method random
 ```
 
 ### (Optional) inspect dataset
-Follow instructions [here](https://github.com/microsoft/MegaDetector/tree/main/classification#5-optional-manually-inspect-dataset), but add and run the following code block at the beginning of the "Imports and Constants" section of `inspect_dataset.ipynb`:
+Follow instructions [here](https://github.com/microsoft/CameraTraps/tree/main/archive/classification#5-optional-manually-inspect-dataset), but add and run the following code block at the beginning of the "Imports and Constants" section of `inspect_dataset.ipynb`:
 
 ```python
 import sys
