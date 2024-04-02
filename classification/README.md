@@ -177,10 +177,10 @@ To crop images to their detections' respective bounding boxes, run:
 
 ```bash
 python ./utils/crop_detections.py \
-    ./data/raw/animl/animl_cct.json \
+    ./data/interim/animl/animl_clean_cct.json \
     ./data/processed/animl/crops \
     --images-dir ./data/raw/animl \
-    --crop-strategy square \
+    --crop-strategy pad \
     --threads 50 \
     --logdir  ./data/interim/animl/logs
 ```
@@ -198,8 +198,8 @@ python ./utils/create_classification_dataset.py \
     ./data/interim/animl \
     --mode csv cct splits \
     --crops-dir ./data/processed/animl/crops \
-    --cct-json  ./data/raw/animl/animl_cct.json \
-    --min-locs 6 \
+    --cct-json  ./data/interim/animl/animl_clean_cct.json \
+    --min-locs 3 \
     --val-frac 0.2 --test-frac 0.1 \
     --method random
 ```
@@ -224,54 +224,37 @@ sys.path
 ```
 
 ### Create separate cct files for each split
-Step through `invasive-animal-detection/notebooks/create_separate_cct_for_splits.ipynb` to create separate cct files for each split. 
+Step through `./notebooks/create_separate_cct_for_splits.ipynb` to create separate cct files for each split. 
+
+### Set up Comet for logging
+Set up a comet.ml account here: https://www.comet.com/signup and [generate API keys](https://www.comet.com/docs/v2/guides/getting-started/quickstart/#get-an-api-key).
+
+Create a `.env` file in the `./classifier` directory with the following variables:
+
+```
+COMET_API_KEY=<Your API Key>
+COMET_PROJECT_NAME=<Your Workspace Name>
+COMET_WORKSPACE=<Your Project Name>
+```
 
 ### Train classifier
-
-TODO: add instructions on setting up comet account and getting keys?
-TODO: add instructions for creating a `.comet.config` file ([docs](https://www.comet.com/docs/v2/guides/tracking-ml-training/configuring-comet/#configure-comet-using-the-comet-config-file))
-Create a `.comet.config` file in the `invasive-animal-detection/ias-classifier` directory with the following variables:
-
-```
-[comet]
-api_key=<Your API Key>
-workspace=<Your Workspace Name>
-project_name=<Your Project Name>
-```
+TODO: document run folder structure, config.yml, etc.
 
 ```bash
-python ias-classifier/train.py --config runs/resnet-18/subsample-rats/config.yml
+python ./classifier/train.py \
+    --config ./runs/resnet-18/animl/config.yml \
+    --resume  # use --resume flag to resume training from an existing checkpoint
+    # --no-resume # use --no-resume flag to start training from scratch
 ```
 
-
+### Generate predictions from a checkpoint
 
 ```bash
-python ias-classifier/predict.py \
-    --config runs/resnet-18/baseline/config.yml \
+python ./classifier/predict.py \
+    --config runs/resnet-18/animl/config.yml \
     --checkpoint 200.pt \
     --split val
 ```
 
-Run `evaluate_results.ipynb`
-
-<!-- ```bash
-python MegaDetector/classification/train_classifier.py \
-    $BASE_LOGDIR \
-    ~/crops \
-    --model-name efficientnet-b3 --pretrained \
-    --label-weighted \
-    --epochs 50 --batch-size 80 --lr 3e-5 \
-    --weight-decay 1e-6 \
-    --num-workers 8 \
-    --logdir $BASE_LOGDIR --log-extreme-examples 3
-```
-
-NOTE: I ran into a few issues running the command above: 
-- had to update torchvision and pytorch:
-```bash
-conda update torchvision
-conda update pytorch
-```
-- The environment initially had trouble finding CUDA, but [trick described here for Linux](https://github.com/microsoft/CameraTraps/tree/main/classification#verifying-that-cuda-is-available-and-dealing-with-the-case-where-it-isnt) solved it. 
-- After those fixes I was able to get the training started but quickly ran into a `RuntimeError: CUDA out of memory.` error. The SageMaker Studio Lab env gives you 15GB memory, which evidently was not enough, but I was able to resume training by dropping the `--batch-size` param down to 32. 
-- Ultimately, however, after 10 epochs, I maxed out SageMaker Studio Lab's 25GB of disk space. The vast majority of the disk usage was from Conda envs and packages (22GB). -->
+### evaluate results
+Run `./notebooks/valuate_results.ipynb`
