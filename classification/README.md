@@ -64,56 +64,21 @@ pip install torch==1.8.1+cu111 torchvision==0.9.1+cu111 torchaudio==0.8.1 -f htt
 conda install -c conda-forge accimage
 ```
 
-#### Add additional directories - `TODO: UPDATE` 
+#### Add additional directories 
 
 Add `data/`, subdirectory under `classification/`, and add the following directories below that:
 ```
-classifification/            
+classifification/
+    classifier/
     data/
         interim/
         processed/
         raw/
     docs/
-    classifier/
+    notebooks/
+    runs/
+    utils/
     ...
-```
-
-`TODO: not sure we need this anymore`
-Add additional directories - and sub directories listed below (`~/classifier-training`, `~/images`, `~/crops`, etc.) so that the contents of your `home/` directory matches the following structure:
-
-```
-ai4eutils/                      # Microsoft's AI for Earth Utils repo
-
-animl-analytics/                # animl-analytics repo (utilities for exporting images)
-
-classifier-training/            
-    BASE_LOGDIR/                # classification dataset and splits
-        LOGDIR/                 # logs and checkpoints from a single training run
-
-invasive-animal-detection/      # This repo
-
-MegaDetector/                   # MegaDetector repo
-
-crops/                          # local directory to save cropped images
-    datasetX/                   # images are organized by dataset
-        img0___crop00.jpg
-
-images/                         # local directory to save full-size images
-    datasetX/                   # images and metadata are organized by dataset
-        images/
-            img0.jpg
-        metadata/
-            datasetX.json
-
-```
-
-#### Setup Env variables `TODO: not sure we need this anymore`
-The following environment variables are useful to have in `.bashrc`:
-
-```
-# Python development
-export PYTHONPATH="/home/<user>/MegaDetector:/home/<user>/ai4eutils"
-export MYPYPATH=$PYTHONPATH
 ```
 
 ### Export annotations from Animl and downlaod image files
@@ -167,7 +132,7 @@ python ./utils/download_lila_subset.py
 `TODO: UPDATE` figure out how we want to structure `/images` directory and either document merging image directories into one or update image file download workflow to download images to one directory
 
 ### Clean and combine Animl and LILA datasets into single COCO file
-Launch and step through the steps in the `clean_and_combine_datasets.ipynb`. 
+Launch and step through the steps in the `clean_and_combine_datasets.ipynb`.
 
 ### Crop images 
 To crop images to their detections' respective bounding boxes, run:
