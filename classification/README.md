@@ -127,7 +127,7 @@ export PATH=/home/<user>/azcopy:$PATH
 python ./utils/download_lila_subset.py
 ```
 
-`TODO: UPDATE` figure out how we want to structure `/images` directory and either document merging image directories into one or update image file download workflow to download images to one directory
+`TODO: UPDATE` figure out how we want to structure `/data/raw/` directory when using multiple datasets and either document merging image directories into one or update image file download workflow to download images to one directory.
 
 ## Clean and combine Animl and LILA datasets into single COCO file
 Launch and step through the steps in the `clean_and_combine_datasets.ipynb`.
@@ -137,17 +137,17 @@ To crop images to their detections' respective bounding boxes, run:
 
 ```bash
 python ./utils/crop_detections.py \
-    ./data/interim/animl/animl_clean_cct.json \
-    ./data/processed/animl/crops \
-    --images-dir ./data/raw/animl \
+    ./data/interim/<dataset_name>/<dataset_name>_clean_cct.json \
+    ./data/processed/<dataset_name>/crops \
+    --images-dir ./data/raw/<dataset_name> \
     --crop-strategy pad \
     --threads 50 \
-    --logdir  ./data/interim/animl/logs
+    --logdir  ./data/interim/<dataset_name>/logs
 ```
 
 NOTE: `--crop-strategy` options include: 
-- `square` (will pick the longer of the two sides of the bbox, and crop a square around the bbox to that dimension)
-- `pad` (will preserve the aspect ratio of the crop but willl add padding (pixels with a value of 0) to make the crop square)
+- `square` - will pick the longer of the two sides of the bbox, and crop a square around the bbox to that dimension (i.e., there will be more background included in the crop)
+- `pad` - will preserve the aspect ratio of the crop but will add padding (pixels with a value of 0) to make the crop square
 
 ## Create classification dataset & split crops into train/val/test sets
 Preparing a classification dataset for training involves two steps, both of which are performed when running `./utils/create_classification_dataset.py`:
@@ -161,10 +161,10 @@ The splits will be specified in the output `splits.json` file.
 
 ```bash
 python ./utils/create_classification_dataset.py \
-    ./data/interim/animl \
+    ./data/interim/<dataset_name> \
     --mode csv cct splits \
-    --crops-dir ./data/processed/animl/crops \
-    --cct-json  ./data/interim/animl/animl_clean_cct.json \
+    --crops-dir ./data/processed/<dataset_name>/crops \
+    --cct-json  ./data/interim/<dataset_name>/<dataset_name>_clean_cct.json \
     --min-locs 3 \
     --val-frac 0.2 --test-frac 0.1 \
     --method random
@@ -173,7 +173,7 @@ python ./utils/create_classification_dataset.py \
 Example args if you just want to re-generate splits:
 ```bash
 python ./utils/create_classification_dataset.py \
-    .data/interim/animl \
+    .data/interim/<dataset_name> \
     --mode splits \
     --val-frac 0.2 --test-frac 0.1 \
     --method random
@@ -226,7 +226,7 @@ TODO: document how to modify the training code to do things not set in `config.y
 
 ```bash
 python ./classifier/train.py \
-    --config ./runs/resnet-18/animl/config.yml \
+    --config ./runs/resnet-18/baseline/config.yml \
     --resume  # use --resume flag to resume training from an existing checkpoint
     # --no-resume # use --no-resume flag to start training from scratch
 ```
@@ -235,7 +235,7 @@ python ./classifier/train.py \
 
 ```bash
 python ./classifier/predict.py \
-    --config runs/resnet-18/animl/config.yml \
+    --config runs/resnet-18/baseline/config.yml \
     --checkpoint 200.pt \
     --split val
 ```
