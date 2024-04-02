@@ -1,21 +1,19 @@
 # Classifier training resources
-Guidance for training classifiers using Animl data.
+Guidance for training a classifier using a combination of [Animl](animl.camera/) and [LILA](lila.science/) camera trap data.
 
 ## `Training a Classifier`
 
-
 ### Setup
 
-This workflow relies heavily on the [classifier training](https://github.com/agentmorris/MegaDetector/tree/main/classification) instructions and code originally published by Microsoft's AI for Earth Team but now maintained by Dan Morris. The instructions below simply provide guidance on  exporting images and annotations from Animl and shoe-horning them into the AI 4 Earth team's classifier training workflow. As such, we highly recommend referencing the `/MegaDetector/classification` README.md in conjunction with these instructions, as they go into much more detail about each of the steps outlined here.
+This workflow draws from utilites from MegaDetector's [classifier training](https://github.com/microsoft/CameraTraps/tree/main/archive/classification) instructions and code originally published by Microsoft's AI for Earth Team but now maintained by Dan Morris. It also uses CV4Ecology's [ct_classifier](https://github.com/CV4EcologySchool/ct_classifier) as a starting point for structuring the project and writing training scritps. For more information on the project structure and best-practices, watch Björn Lütjens' lecture on organizing a classifier training project [here](https://www.youtube.com/watch?v=KAymEcailo0&list=PLGuY5I6wycRghx8ik0OkzHUkeLbyVoQYF&index=3).
 
 #### Install dependencies
 ```bash
-### make directory for downloads (if there isn't one) and cd into it to downolad tars
-mdkir ~/Downloads
-
 ### install anaconda 
-wget https://repo.anaconda.com/archive/Anaconda3-2022.10-Linux-x86_64.sh
-bash Anaconda3-2022.10-Linux-x86_64.sh
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+chmod +x Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh
+rm Miniconda3-latest-Linux-x86_64.sh 
 source .bashrc
 ```
 
@@ -25,21 +23,30 @@ Clone the following repos:
 - [agentmorris/MegaDetector](https://github.com/agentmorris/MegaDetector)
 - [microsoft/ai4eutils](https://github.com/microsoft/ai4eutils)
 - [animl-analytics](https://github.com/tnc-ca-geo/animl-analytics)
-- and this repo ([animl-ml](https://github.com/tnc-ca-geo/animl-ml))
+- and, if you haven't already, this repo: ([animl-ml](https://github.com/tnc-ca-geo/animl-ml))
 
-#### Build and activate Conda environment
-
+#### Get dependencies
+If you're remoting into a computer, it might be worth starting a tmux session for this as creating the conda environment can take a while.
+From the `/animl-ml/classification/` directory, run:
 ```bash
-conda create -n cameratraps-classifier
-conda env update -f ~/animl-ml/environment-classifier.yml --prune
+conda env create -f environment-classifier.yml
+conda env update -f environment-classifier.yml --prune
 conda activate cameratraps-classifier
 ```
 
-Finally, install `azure-cosmos` dependency (it's required but seemed to be missing from the env):
+Install pytorch with Pip: 
+
+```bash
+pip install torch==1.8.1+cu111 torchvision==0.9.1+cu111 torchaudio==0.8.1 -f https://download.pytorch.org/whl/torch_stable.html
+```
+
+If you have trouble, try uninstalling pytorch with `conda uninstall pytorch` and/or `pip uninstall torch` and reinstalling again with the command above
+
+<!-- Finally, install `azure-cosmos` dependency (it's required but seemed to be missing from the env): /*TODO: do we neeed this?*/
 
 ```bash
 conda install -n cameratraps-classifier -c conda-forge azure-cosmos
-```
+``` -->
 
 #### Verify CUDA availability
 ```bash
@@ -48,80 +55,61 @@ python ~/MegaDetector/sandbox/torch_test.py
 
 ### If CUDA isn't available (the above command returned `CUDA available: False`), please execute the following step:
 pip uninstall torch torchvision
-conda install pytorch=1.10.1 torchvision=0.11.2 -c pytorch
+pip install torch==1.8.1+cu111 torchvision==0.9.1+cu111 torchaudio==0.8.1 -f https://download.pytorch.org/whl/torch_stable.html
 ```
 
-#### Optional steps for performance gimpimprovementsroains
+#### Optional steps for performance
 ```bash
 ### Optional steps to make classification faster in Linux
 conda install -c conda-forge accimage
-pip uninstall -y pillow
-pip install pillow-simd
 ```
 
-#### Add additional directories
+#### Add additional directories 
 
-Add additional directories (`~/classifier-training`, `~/images`, `~/crops`, etc.) so that the contents of your `home/` directory matches the following structure:
-
+Add `data/`, subdirectory under `classification/`, and add the following directories below that:
 ```
-ai4eutils/                      # Microsoft's AI for Earth Utils repo
-
-animl-analytics/                # animl-analytics repo (utilities for exporting images)
-
-animl-ml/                       # This repo, contains Animl-specific utilities
-
-MegaDetector/                   # MegaDetector repo
-    classification/
-        BASE_LOGDIR/            # classification dataset and splits
-            LOGDIR/             # logs and checkpoints from a single training run
-
-classifier-training/            
-    mdcache/                    # cached "MegaDetector" outputs
-        v5.0b/                  #   NOTE: MegaDetector is in quotes because we're
-            datasetX.json       #   also storing Animl annotations here too
-    megaclassifier/             # files relevant to MegaClassifier
-
-crops/                          # local directory to save cropped images
-    datasetX/                   # images are organized by dataset
-        img0___crop00.jpg
-
-images/                         # local directory to save full-size images
-    datasetX/                   # images are organized by dataset
-        img0.jpg
-
-```
-
-#### Setup Env variables
-The following environment variables are useful to have in `.bashrc`:
-
-```
-# Python development
-export PYTHONPATH="/home/<user>/MegaDetector:/home/<user>/ai4eutils"
-export MYPYPATH=$PYTHONPATH
-```
-
-It's also helpful to set a `$BASE_LOGDIR` variable for the session:
-```
-export BASE_LOGDIR=/home/<user>/MegaDetector/classification/BASE_LOGDIR
+classifification/
+    classifier/
+    data/
+        interim/
+        processed/
+        raw/
+    docs/
+    notebooks/
+    runs/
+    utils/
+    ...
 ```
 
 ### Export annotations from Animl and downlaod image files
 This will be a two step process:
 1. Export annotations and image metadata as COCO for Camera Traps .json document:
   - documentation on how to export annotations to COCO for Camera Traps from Animl can be found [here](https://docs.animl.camera/fundamentals/export-data)
-  - rename file to `<dataset_name>_cct.json` and upload to `~/classifier-training/mdcache/v5.0a/`
+  - rename file to `animl_cct.json` and upload to `~/animl-ml/classification/data/raw/animl/animl_cct.json` (you sahould also make additinal sub directories if they aren't yet there)
 2. Copy image _files_ listed in `<dataset_name>_cct.json` from S3:
-  - Make sure you have AWS credentials to read from the `animl-images-archive-prod` bucket
+  - Make sure you have AWS credentials to read from the `animl-images-serving-prod` bucket
   - Install AWS CLI , boto3, and configure with your AWS credentials (NOTE: creds must be stored in a named profile called `animl`):
   ```bash
   conda install --name cameratraps-classifier -c anaconda boto3
   conda install --name cameratraps-classifier -c conda-forge awscli
+  conda env update --name cameratraps-classifier --file environment-classifier.yml --prune
   aws configure --profile animl
   ```
   - To download all the images referenced in the cct.json file, navigate to `~/animl-analytics/` and run:
   ```bash
-  python utils/download_images.py --coco-file  ~/classifier-training/mdcache/v5.0a/<dataset_name>_cct.json --output-dir ~/images/<dataset_name>
+  python ~/animl-analytics/utils/download_images.py --coco-file ~/animl-ml/classification/data/raw/animl/animl_cct.json --output-dir ~/animl-ml/classification/data/raw/animl/
   ```
+
+`TODO: generalize and test steps for downloading and including LILA data`
+`NOTE: these steps have not been tested or updated for the animl-ml/classification repo`
+### Download Island Conservation Cameratraps metadata
+
+```bash
+python ./utils/download_lila_dataset_cct.py 
+```
+### Get list of locations that have rat images ingit them and inspect those locations' distributions of non-rat samples
+
+Step through `/notebooks/find_rat_locations.py`, modifying the config of `download_lila_subset.py` script according to instructions in the notebook.
 
 ### Download annotations and images from LILA
 1. Download AZCopy
@@ -136,91 +124,102 @@ Add newly created directory to your `$PATH` in `.bashrc`:
 export PATH=/home/<user>/azcopy:$PATH
 ```
 
-2. Run `download_lila_subset.py`
+2. Run `utils/download_lila_subset.py`
+```bash
+python ./utils/download_lila_subset.py
+```
+
+`TODO: UPDATE` figure out how we want to structure `/images` directory and either document merging image directories into one or update image file download workflow to download images to one directory
 
 ### Clean and combine Animl and LILA datasets into single COCO file
-Launch and step through the steps in the `clean_and_combine_datasets.ipynb`. 
-
-
-### Convert exported COCO file to MegaDetector results format
-Some of the following steps expect the image annotations to be in the same [format](https://github.com/microsoft/CameraTraps/tree/main/api/batch_processing/#batch-processing-api-output-format) that MegaDetector outputs after processing a batch of images. To convert the COCO for Cameratraps file that we exported from Animl to a MegaDetector results file, navigate to the `/home/studio-lab-user/` directory and run:
-
-```bash
-python animl-ml/classification/utils/cct_to_md.py \
-  --input_filename ~/classifier-training/mdcache/v5.0b/<dataset_name>_cct.json \
-  --output_filename ~/classifier-training/mdcache/v5.0b/<dataset_name>_md.json
-```
+Launch and step through the steps in the `clean_and_combine_datasets.ipynb`.
 
 ### Crop images 
 To crop images to their detections' respective bounding boxes, run:
+--crop-strategy options: 
+- square (will pick the longer of the two sides of the bbox, and crop a square around the bbox to that dimension)
+- pad (will preserve the aspect ratio of the crop but willl add padding (pixels with a value of 0) to make the crop square)
 
 ```bash
-python animl-ml/classification/utils/crop_detections.py \
-    ~/classifier-training/mdcache/v5.0b/<dataset_name>_md.json \
-    ~/crops/<dataset_name> \
-    --images-dir ~/images/<dataset_name> \
-    --threshold 0 \  # irrelevant for ground-truthed detections but we pass it in anyhow
-    --square-crops \
+python ./utils/crop_detections.py \
+    ./data/interim/animl/animl_clean_cct.json \
+    ./data/processed/animl/crops \
+    --images-dir ./data/raw/animl \
+    --crop-strategy pad \
     --threads 50 \
-    --logdir $BASE_LOGDIR
-```
-
-### Convert MegaDetector results file to queried_images.json
-Microsoft's `CameraTraps/classification/create_classification_dataset.py` takes the output of `json_validator.py` (see their docs on what that does [here](https://github.com/microsoft/CameraTraps/tree/main/classification#2-query-megadb-for-labeled-images)) as an input. To convert our MegaDetecotr results file to `queried_images.json` file, run: 
-
-```bash
-python animl-ml/classification/utils/md_to_queried_images.py \
-  --input_filename ~/classifier-training/mdcache/v5.0b/<dataset_name>_md.json \
-  --dataset <dataset_name> \
-  --output_filename $BASE_LOGDIR/queried_images.json
+    --logdir  ./data/interim/animl/logs
 ```
 
 ### Create classification dataset & split crops into train/val/test sets
-This step is well documented in the `microsoft/CameraTraps/classification` [README](https://github.com/microsoft/CameraTraps/tree/main/classification#4-create-classification-dataset-and-split-image-crops-into-trainvaltest-sets-by-location), but some sample arguments are below: 
+Preparing a classification dataset for training involves two steps:
+1. Create a CSV file (classification_ds.csv) representing our classification dataset, where each row in this CSV represents a single training example, which is an image crop with its label. Along with this CSV file, we also create a label_index.json JSON file which defines a integer ordering over the string classification label names.
+2. Split the training examples into 3 sets (train, val, and test) based on the geographic location where the images were taken. The splits will be specified in the output `splits.json` file. The splits are created by randomly generating 10,000 different potential sets of splits, and then scoring each set based on the following criteria:
+- (a) the number of examples (labels) for each class roughly matchs the desired % for each split (e.g. 70%/20%/10%). So if we want to use 70% of the data for training, this scoring function will preference splits in which each individual class has as close to 70% of all available samples of that class as possible.
+- (b) for the val and test splits, we're also scoring the degree to which the distribution of classes within the split matches the distribution of classes across the whole dataset (i.e, trying to mimic "real-world") distributions as best we can.
+- (c) Additionally, the function preferences splits in which the number of locations in the split that class is present in is also as close to 70% of all locations that the class is present in across the whole dataset.
 
 ```bash
-python CameraTraps/classification/create_classification_dataset.py \
-    $BASE_LOGDIR \
-    --mode csv splits \
-    --queried-images-json $BASE_LOGDIR/queried_images.json \
-    --cropped-images-dir ~/crops \
-    --detector-output-cache-dir ~/classifier-training/mdcache --detector-version 5.0b \
-    --threshold 0 \
+python ./utils/create_classification_dataset.py \
+    ./data/interim/animl \
+    --mode csv cct splits \
+    --crops-dir ./data/processed/animl/crops \
+    --cct-json  ./data/interim/animl/animl_clean_cct.json \
     --min-locs 3 \
-    --val-frac 0.2 --test-frac 0.2 \
+    --val-frac 0.2 --test-frac 0.1 \
+    --method random
+```
+
+Example args if you just want to re-generate splits:
+```bash
+python ./utils/create_classification_dataset.py \
+    .data/interim/animl \
+    --mode splits \
+    --val-frac 0.2 --test-frac 0.1 \
     --method random
 ```
 
 ### (Optional) inspect dataset
-Follow instructions [here](https://github.com/microsoft/CameraTraps/tree/main/classification#5-optional-manually-inspect-dataset), but add and run the following code block at the beginning of the "Imports and Constants" section of `inspect_dataset.ipynb`:
+Follow instructions [here](https://github.com/microsoft/CameraTraps/tree/main/archive/classification#5-optional-manually-inspect-dataset), but add and run the following code block at the beginning of the "Imports and Constants" section of `inspect_dataset.ipynb`:
 
 ```python
 import sys
-sys.path.append("/home/studio-lab-user/CameraTraps")
-sys.path.append("/home/studio-lab-user/stuiai4eutils")
+sys.path.append("/home/<user>/MegaDetector")
+sys.path.append("/home/<user>/ai4eutils")
 sys.path
 ```
 
+### Create separate cct files for each split
+Step through `./notebooks/create_separate_cct_for_splits.ipynb` to create separate cct files for each split. 
+
+### Set up Comet for logging
+Set up a comet.ml account here: https://www.comet.com/signup and [generate API keys](https://www.comet.com/docs/v2/guides/getting-started/quickstart/#get-an-api-key).
+
+Create a `.env` file in the `./classifier` directory with the following variables:
+
+```
+COMET_API_KEY=<Your API Key>
+COMET_PROJECT_NAME=<Your Workspace Name>
+COMET_WORKSPACE=<Your Project Name>
+```
+
 ### Train classifier
+TODO: document run folder structure, config.yml, etc.
 
 ```bash
-python train_classifier.py \
-    $BASE_LOGDIR \
-    ~/crops \
-    --model-name efficientnet-b3 --pretrained \
-    --label-weighted \
-    --epochs 50 --batch-size 160 --lr 3e-5 \
-    --weight-decay 1e-6 \
-    --num-workers 4 \ # default is 8, but I got warnings that the max was 4 in SageMaker Studio Lab env
-    --logdir $BASE_LOGDIR --log-extreme-examples 3
+python ./classifier/train.py \
+    --config ./runs/resnet-18/animl/config.yml \
+    --resume  # use --resume flag to resume training from an existing checkpoint
+    # --no-resume # use --no-resume flag to start training from scratch
 ```
 
-NOTE: I ran into a few issues running the command above: 
-- had to update torchvision and pytorch:
+### Generate predictions from a checkpoint
+
 ```bash
-conda update torchvision
-conda update pytorch
+python ./classifier/predict.py \
+    --config runs/resnet-18/animl/config.yml \
+    --checkpoint 200.pt \
+    --split val
 ```
-- The environment initially had trouble finding CUDA, but [trick described here for Linux](https://github.com/microsoft/CameraTraps/tree/main/classification#verifying-that-cuda-is-available-and-dealing-with-the-case-where-it-isnt) solved it. 
-- After those fixes I was able to get the training started but quickly ran into a `RuntimeError: CUDA out of memory.` error. The SageMaker Studio Lab env gives you 15GB memory, which evidently was not enough, but I was able to resume training by dropping the `--batch-size` param down to 32. 
-- Ultimately, however, after 10 epochs, I maxed out SageMaker Studio Lab's 25GB of disk space. The vast majority of the disk usage was from Conda envs and packages (22GB).
+
+### evaluate results
+Run `./notebooks/valuate_results.ipynb`

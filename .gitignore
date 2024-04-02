@@ -152,3 +152,14 @@ log.txt
 
 # vs code settings
 .vscode
+
+
+# Cython debug symbols
+cython_debug/
+
+# data and models
+data/
+model_states/
+
+# comet config file
+.comet.config

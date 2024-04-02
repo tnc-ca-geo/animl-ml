@@ -18,21 +18,38 @@ import os
 from tqdm import tqdm
 from multiprocessing.pool import ThreadPool
 from urllib.parse import urlparse
+import pandas as pd
+
 
 # LILA camera trap master metadata file
 metadata_url = 'http://lila.science/wp-content/uploads/2020/03/lila_sas_urls.txt'
-# metadata_url = 'https://lilablobssc.blob.core.windows.net/islandconservationcameratraps/public'
-
-# In this example, we're using the Missouri Camera Traps data set and the Caltech Camera Traps dataset
 datasets_of_interest = ['Island Conservation Camera Traps']
-
-# All lower-case; we'll convert category names to lower-case when comparing
-species_of_interest = ['rat']
+species_of_interest = ['rat', 'iguana', 'cat', 'pig']
+locations_of_interest = [
+    'dominicanrepublic/camara116', 'dominicanrepublic/camara107', 
+    'dominicanrepublic/camara106', 'dominicanrepublic/camara20', 
+    'dominicanrepublic/camara115', 'dominicanrepublic/camara12', 
+    'dominicanrepublic/camara32', 'dominicanrepublic/camara01', 
+    'dominicanrepublic/camara108', 'dominicanrepublic/camara111', 
+    'dominicanrepublic/camara117', 'dominicanrepublic/camara24', 
+    'dominicanrepublic/camara30', 'ecuador1/ic1619', 'ecuador1/ic1616', 
+    'chile/vaqueria', 'chile/frances02', 'puertorico/7a', 'puertorico/23', 
+    'puertorico/2a', 'palau/cam02a', 'palau/cam09a', 'palau/cam10a', 
+    'palau/cam13a', 'palau/cam14a', 'palau/cam01a', 'palau/cam04a', 
+    'palau/cam06a', 'palau/cam07a', 'palau/cam08a', 'ecuador2/ic1605', 
+    'ecuador2/ic1607', 'ecuador2/ic1618', 'micronesia/cam12', 
+    'micronesia/cam13', 'micronesia/cam15', 'micronesia/cam03', 
+    'micronesia/cam11', 'micronesia/cam10', 'micronesia/cam05', 
+    'micronesia/cam08', 'micronesia/cam17', 'micronesia/cam14', 
+    'micronesia/cam16', 'micronesia/cam02', 'micronesia/cam18', 
+    'micronesia/cam04', 'micronesia/cam19', 'micronesia/cam06', 
+    'micronesia/cam09'
+]
 
 # We'll write images, metadata downloads, and temporary files here
-lila_local_base = os.path.expanduser('~/images/island')
+lila_local_base = os.path.expanduser('~/images/ic')
 
-output_dir = os.path.join(lila_local_base,'lila_downloads_by_rat')
+output_dir = os.path.join(lila_local_base,'images')
 os.makedirs(output_dir,exist_ok=True)
 
 metadata_dir = os.path.join(lila_local_base,'metadata')
@@ -51,7 +68,7 @@ overwrite_files = True
 # own magical parallelism)
 n_download_threads = 50
 
-max_images_per_dataset = 6886
+max_images_per_dataset = 25000
 
 
 #%% Support functions
@@ -235,7 +252,27 @@ for ds_name in datasets_of_interest:
     
     # Retrieve all the images that match that category
     image_ids_of_interest = set([ann['image_id'] for ann in annotations if ann['category_id'] in category_ids])
-    
+    print(f'No. images in {ds_name} that match species of interest: {len(image_ids_of_interest)}')
+
+    # Filter by location, if locations_of_interest list is specified
+    image_ids_of_interest_loc_filtered = []
+    images_df = pd.DataFrame(images)
+    if locations_of_interest is not None:
+        print('Filtering by location...')
+        for id in tqdm(image_ids_of_interest):
+            img = images_df.loc[images_df['id'] == id]
+            if ('location' in img) and (img['location'] in locations_of_interest):
+                image_ids_of_interest_loc_filtered.append(id)
+            elif ds_name == 'Island Conservation Camera Traps':
+                # Parse IC's file_name to derive location
+                img_file_name = img.iloc[0]['file_name']
+                loc = img_file_name.split('/')[0:2]
+                loc = '/'.join(loc)
+                if loc in locations_of_interest:
+                    image_ids_of_interest_loc_filtered.append(id)
+        image_ids_of_interest = image_ids_of_interest_loc_filtered
+        print(f'No. images in {ds_name} that match species of interest AND locations of interest: {len(image_ids_of_interest)}')
+
     print('Selected {} of {} images for dataset {}'.format(len(image_ids_of_interest),len(images),ds_name))
     
     # Retrieve image file names
