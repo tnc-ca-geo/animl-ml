@@ -43,7 +43,7 @@ dependencies:
 # Some packages or versions are only available from PyPI
 # These may require GCC to be installed
 - pip:
-  - azure-storage-blob>  # require v12.5.0 for BlobClient.exists()
+  - azure-storage-blob  # require v12.5.0 for BlobClient.exists()
 
   # SIMD acceleration for Pillow.  Linux-only, see README for information.
   - pillow-simd
