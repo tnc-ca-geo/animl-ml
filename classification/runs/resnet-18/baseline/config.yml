@@ -10,7 +10,7 @@ num_workers: 20 # number of CPU cores that are allocated to support (load images
 # dataset parameters
 data_root: /home/nrindlaub/animl-ml/classification/data/processed/animl
 crops_dir: crops
-num_classes: 98
+num_classes: 9
 
 # training hyperparameters
 image_size: [224, 224]

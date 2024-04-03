@@ -4,11 +4,11 @@
 
 # environment/computational parameters
 seed: 32678456782 # random number generator seed (long integer value)
-device: 'cuda:3'
+device: 'cuda:3'  # specify which GPU to use (make sure it's been assigned to you and/or is not in use)
 num_workers: 20 # number of CPU cores that are allocated to support (load images) to the GPU
 
 # dataset parameters
-data_root: /home/natty/invasive-animal-detection/data/processed/subsample-rats
+data_root: /home/nrindlaub/animl-ml/classification/data/processed/subsample-rats
 crops_dir: crops
 num_classes: 10
 

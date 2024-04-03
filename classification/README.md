@@ -220,7 +220,7 @@ classifification/
 
 Use the `config.yml` to set/adjust hyperparameters.
 
-TODO: document how to modify the training code to do things not set in `config.yml`, e.g. use a different model architecture, load alternative pretrained weights, use a different loss function.
+TODO: document how to modify the training code to do things not set in `config.yml`, e.g. use a different model architecture, load alternative pretrained weights, use a different loss function, different augmentations, etc.
 
 ### Initiate the training script
 
