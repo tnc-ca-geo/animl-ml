@@ -4,7 +4,7 @@
 
 # environment/computational parameters
 seed: 32678456782 # random number generator seed (long integer value)
-device: 'cuda:0'
+device: 'cuda:3'
 num_workers: 20 # number of CPU cores that are allocated to support (load images) to the GPU
 
 # dataset parameters

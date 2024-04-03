@@ -218,7 +218,7 @@ classifification/
     ...
 ```
 
-Use the `config.yml` to set/adjust hyperparameters.
+Use the `config.yml` to set/adjust environmental variables and hyperparameters.
 
 TODO: document how to modify the training code to do things not set in `config.yml`, e.g. use a different model architecture, load alternative pretrained weights, use a different loss function, different augmentations, etc.
 
@@ -242,3 +242,17 @@ python ./classifier/predict.py \
 
 ### evaluate results
 Run `./notebooks/valuate_results.ipynb`
+
+## Misc. tips and helpful commands
+
+- If using a remote computer, use [tmux](https://github.com/tmux/tmux/wiki) sessions to prevent losing work/progress if you get disconnected from the remote computer. This tmux [cheat sheet](https://devhints.io/tmux) has a lot of helpful commands.
+
+- Command for monitoring GPU useage:
+    ```bash
+    nvidia-smi -l 1
+    ```
+
+- Command for monitoring system processes:
+    ```bash
+    htop
+    ```

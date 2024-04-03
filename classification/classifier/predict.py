@@ -1,8 +1,6 @@
 '''
-    Training script. Here, we load the training and validation datasets (and
-    data loaders) and the model and train and validate the model accordingly.
-
-    2022 Benjamin Kellenberger
+    Prediction script. Here, we load a checkpoint and use it to make
+    predictions for an entire split.
 '''
 
 import os
@@ -17,7 +15,6 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch.optim import SGD
-from sklearn.metrics import confusion_matrix, precision_score, recall_score
 import numpy as np
 
 from util import init_seed
@@ -40,7 +37,7 @@ def load_model(cfg, checkpoint, dataloader):
 def test(cfg, dataLoader, model):
     '''
         Inference function. Note that this looks almost the same as the validation
-        function, in train, except the metrics we save are different
+        function in train, except the metrics we save are different
     '''
     
     device = cfg['device']
