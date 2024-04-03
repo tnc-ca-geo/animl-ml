@@ -123,8 +123,8 @@ def main(config_path, checkpoint, split):
     output_dict.keys()
     output_dict['pred_labels'][0]
     out_file = os.path.join(experiment_dir, 'predictions', f'{split}_results.json')
+    Path(out_file).parents[0].mkdir(parents=True, exist_ok=True)
     print(f'INFERENCE DONE - writing results to {out_file}')
-
     with open(out_file,'w') as f:
         json.dump(output_dict, f)      
 

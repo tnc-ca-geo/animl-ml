@@ -241,7 +241,7 @@ python ./classifier/predict.py \
 ```
 
 ### evaluate results
-Run `./notebooks/valuate_results.ipynb`
+Run `./notebooks/evaluate_results.ipynb`
 
 ## Misc. tips and helpful commands
 
