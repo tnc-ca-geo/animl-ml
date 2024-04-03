@@ -3,7 +3,7 @@ Guidance for training a classifier using a combination of [Animl](animl.camera/)
 
 ## Setup
 
-This workflow draws from utilites from MegaDetector's [classifier training](https://github.com/microsoft/CameraTraps/tree/main/archive/classification) instructions and code originally published by Microsoft's AI for Earth Team but now maintained by Dan Morris. It also uses CV4Ecology's [ct_classifier](https://github.com/CV4EcologySchool/ct_classifier) as a starting point for structuring the project and writing training scritps. For more information on the project structure and best-practices, watch Björn Lütjens' lecture on organizing a classifier training project [here](https://www.youtube.com/watch?v=KAymEcailo0&list=PLGuY5I6wycRghx8ik0OkzHUkeLbyVoQYF&index=3).
+This workflow draws from utilites from MegaDetector's [classifier training](https://github.com/microsoft/CameraTraps/tree/main/archive/classification) instructions and code originally published by Microsoft's AI for Earth Team but now maintained by Dan Morris. It also uses CV4Ecology's [ct_classifier](https://github.com/CV4EcologySchool/ct_classifier) as a starting point for structuring the project and writing training scritps. For more information on the project structure and best-practices, watch Björn Lütjens' lecture on organizing a classifier training project [here](https://youtu.be/KAymEcailo0?si=aSAMYPKZGkNHyhwe).
 
 ### Install dependencies
 ```bash
@@ -244,6 +244,13 @@ python ./classifier/predict.py \
 Run `./notebooks/evaluate_results.ipynb`
 
 ## Misc. tips and helpful commands
+
+- Helpful lectures from Caltech's Computer Vision for Ecology course:
+    - [Björn Lütjens - Lecture 3 - Staying Organized in Machine Learning Projects](https://youtu.be/KAymEcailo0?si=owTSIPCmZac3Agqg)
+    - [Shir Bar - Lecture 6 - Evaluation Metrics in Computer Vision for Ecology](https://youtu.be/alO00a0cINg?si=u0RIdckO8FGGp8GG)
+    - [Sam Lapp - Lecture 7 - Probing your model's performance: Offline Evaluation & Analysis](https://youtu.be/sIZfsBDk6Pg?si=eJqGOA9CLvEi7yyJ)
+    - [Justin Kay - Lecture 8 - What's next? Rules of thumb to improve results](https://youtu.be/8RlGeT_q0lk?si=-ggI2EeO-xVJwtgq)
+    - [Sam Lapp - Lecture 12 - What Do I Do With My (Imperfect) Model?](https://youtu.be/OdvAmjSKysU?si=Evv5VO0m62BtnsJE)
 
 - If using a remote computer, use [tmux](https://github.com/tmux/tmux/wiki) sessions to prevent losing work/progress if you get disconnected from the remote computer. This tmux [cheat sheet](https://devhints.io/tmux) has a lot of helpful commands.
 
