@@ -17,9 +17,9 @@ source .bashrc
 
 ### Clone relevant repos
 
-Clone the following repos:
+Clone the following repos into your home directory:
 - [agentmorris/MegaDetector](https://github.com/agentmorris/MegaDetector)
-- [microsoft/ai4eutils](https://github.com/microsoft/ai4eutils)
+- [microsoft/ai4eutils](https://github.com/microsoft/ai4eutils) # TODO: not in use?? double check we need this
 - [animl-analytics](https://github.com/tnc-ca-geo/animl-analytics)
 - and, if you haven't already, this repo: ([animl-ml](https://github.com/tnc-ca-geo/animl-ml))
 
