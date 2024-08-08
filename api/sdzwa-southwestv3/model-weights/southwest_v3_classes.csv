@@ -1,0 +1,28 @@
+id,Code,Species,Common
+0,badger,Taxidea taxus,badger
+1,beaver,Castor canadensis,beaver
+2,bird,Aves,bird
+3,boar,Sus scrofa,boar
+4,bobcat,Lynx rufus,bobcat
+5,cat,Felis catus,cat
+6,corvid,Corvidae spp.,corvid
+7,cougar,Puma concolor,cougar
+8,cow,Bos taurus,cow
+9,coyote,Canis latrans,coyote
+10,deer,Cervidae spp.,deer
+11,dog,Canis familiaris,dog
+12,empty,empty,empty
+13,fox,Vulpes spp.,fox
+14,human,Homo sapiens,human
+15,opossum,Didelphis virginiana,opossum
+16,other,other,other
+17,owl,Strigidae spp.,owl
+18,rabbit,Sylvilagus audubonii,rabbit
+19,raccoon,Procyon lotor,raccoon
+20,raptor,Aves,raptor
+21,reptile,Reptilia,reptile
+22,rodent,Rodentia,rodent
+23,skunk,Mephitidae spp.,skunk
+24,squirrel,Sciuridae spp.,squirrel
+25,vehicle,vehicle,vehicle
+26,weasel,Mustela spp.,weasel
