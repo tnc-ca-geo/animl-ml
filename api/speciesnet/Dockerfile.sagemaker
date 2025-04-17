@@ -1,0 +1,41 @@
+# Custom Docker image to run speciesnet in SageMaker
+
+FROM public.ecr.aws/docker/library/python:3.11-slim
+
+# Install system packages
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    pkg-config \
+    libhdf5-dev \
+    libgl1-mesa-glx \ 
+    libglib2.0-0
+
+# Copy requirement files
+COPY requirements.txt /opt/ml/requirements.txt
+
+# Install Python packages
+RUN pip install -r /opt/ml/requirements.txt
+
+# Install speciesnet
+RUN pip install 'speciesnet[server]'
+
+# Copy model server code
+COPY serve.py /opt/ml/code/serve.py
+
+# Create directories required by SageMaker
+RUN mkdir -p /opt/ml/{model,input,output}
+
+# Environment variables for SageMaker
+ENV PYTHONUNBUFFERED=TRUE
+ENV PYTHONDONTWRITEBYTECODE=TRUE
+ENV PATH="/opt/ml/code:${PATH}"
+
+# Set working directory
+WORKDIR /opt/ml/code
+
+# Expose the port that the FastAPI server will run on
+EXPOSE 8000
+
+# Entry point for SageMaker
+ENTRYPOINT ["python", "serve.py"]
