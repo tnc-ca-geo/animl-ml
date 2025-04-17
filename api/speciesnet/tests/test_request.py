@@ -19,5 +19,5 @@ payload = {
 }
 
 # Send request
-response = requests.post('http://localhost:8000/invocations', json=payload)
+response = requests.post('http://localhost:8080/invocations', json=payload)
 print(json.dumps(response.json(), indent=2))

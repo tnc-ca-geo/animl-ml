@@ -34,7 +34,7 @@ ENV PATH="/opt/ml/code:${PATH}"
 WORKDIR /opt/ml/code
 
 # Expose the port that the FastAPI server will run on
-EXPOSE 8000
+EXPOSE 8080
 
 # Entry point for SageMaker
 ENTRYPOINT ["python", "serve.py"]
