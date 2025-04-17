@@ -3,8 +3,6 @@
 import json
 import logging
 import os
-import threading
-from typing import Optional
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -17,73 +15,32 @@ logger = logging.getLogger(__name__)
 from speciesnet.scripts.run_server import SpeciesNetLitAPI
 from speciesnet import DEFAULT_MODEL
 
-class ModelLoader:
-    def __init__(self):
-        self.model = None
-        self.error = None
-        self._loading = False
-        self._lock = threading.Lock()
-
-    def start_loading(self):
-        if not self._loading:
-            self._loading = True
-            thread = threading.Thread(target=self._load_model)
-            thread.daemon = True
-            thread.start()
-
-    def _load_model(self):
-        try:
-            api = SpeciesNetLitAPI(model_name=DEFAULT_MODEL, geofence=True)
-            api.setup(device=None)
-            with self._lock:
-                self.model = api
-            logger.info(f"Initialized SpeciesNet API with model: {DEFAULT_MODEL}")
-        except Exception as e:
-            logger.error(f"Failed to initialize model: {e}")
-            self.error = str(e)
-        finally:
-            self._loading = False
-
-    def is_ready(self) -> bool:
-        return self.model is not None
-
-    def get_model(self) -> Optional[SpeciesNetLitAPI]:
-        return self.model
-
-    def get_error(self) -> Optional[str]:
-        return self.error
-
 # Initialize FastAPI app
 app = FastAPI()
 
-# Initialize model loader
-model_loader = ModelLoader()
-model_loader.start_loading()
+# Initialize SpeciesNet API
+model_name = DEFAULT_MODEL
+try:
+    api = SpeciesNetLitAPI(model_name=model_name, geofence=True)
+    api.setup(device=None)  # Initialize the model
+    logger.info(f"Initialized SpeciesNet API with model: {model_name}")
+except Exception as e:
+    logger.error(f"Failed to initialize model: {e}")
+    raise
 
 @app.get("/ping")
 async def ping():
-    """Health check endpoint that returns healthy even while model is loading"""
-    print('Checking health')
-    if model_loader.error:
-        print("Model failed to load")
-        return JSONResponse(content={"status": "unhealthy", "error": model_loader.get_error()}, status_code=500)
-    return JSONResponse(content={"status": "healthy"}, status_code=200)
+    """Health check endpoint required by SageMaker"""
+    try:
+        if api.model:  # Check if model is loaded
+            return JSONResponse(content={"status": "healthy"}, status_code=200)
+    except:
+        pass
+    return JSONResponse(content={"status": "unhealthy"}, status_code=500)
 
 @app.post("/invocations")
 async def invoke(request: Request):
     """SageMaker invocation endpoint"""
-    # Check if model is ready
-    if not model_loader.is_ready():
-        if model_loader.error:
-            return JSONResponse(
-                status_code=500,
-                content={"error": f"Model failed to load: {model_loader.get_error()}"}
-            )
-        return JSONResponse(
-            status_code=503,
-            content={"error": "Model is still loading"}
-        )
-
     try:
         # Get raw request body
         body = await request.body()
@@ -122,7 +79,6 @@ async def invoke(request: Request):
             
         # Use the SpeciesNet API directly
         try:
-            api = model_loader.get_model()
             # Decode request
             decoded_request = api.decode_request(instances_dict, context=None)
             
