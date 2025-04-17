@@ -41,7 +41,7 @@ Create and activate the Conda environment by running the following form this dir
 
 ```bash
 conda env create -f environment.yml
-conda activate southwest-classifier
+conda activate deepfaune-ne
 ```
 
 Then step through `deepfaune-ne_compile.ipynb`. The notebook should produce a torchscript model 'deepfaune-ne_compiled_cpu.pt' in the `./model-weights/` directory.
@@ -63,8 +63,8 @@ pip install torch-model-archiver
 to install dependencies, then the following to create the archive:
 
 ```bash
-torch-model-archiver --model-name sdzwa-southwestv3 --version 3.0.0 --serialized-file model-weights/southwest_v3_compiled_cpu.pt --extra-files index_to_name.json --handler sdzwa-southwestv3_handler.py
-mv sdzwa-southwestv3.mar model-store/sdzwa-southwestv3.mar
+torch-model-archiver --model-name deepfaune-ne --version 3.0.0 --serialized-file model-weights/deepfaune-ne_compiled_cpu.pt --extra-files index_to_name.json --handler deepfaune-ne_handler.py
+mv deepfaune-ne.mar model-store/deepfaune-ne.mar
 ```
 
 ## Locally build, serve, and test the torchscript model with torchserve
@@ -74,13 +74,13 @@ We can now locally test this model prior to deploying.
 Build the Docker image (you only have to do this once or if you've modified the Dockerfile):
 
 ```bash
-docker build -t torchserve-sdzwa-southwestv3:latest-cpu .
+docker build -t torchserve-deepfaune-ne:latest-cpu .
 ```
 
 Run it:
 
 ```bash
-bash docker_sdzwa-southwestv3.sh $(pwd)/model-store
+bash docker_deepfaune-ne.sh $(pwd)/model-store
 ```
 
 A couple of things need to happen to test the endpoint locally via cURL. To build the payload we need to download an image to test (preferably from Animl because we likely already have bounding boxes for it in the correct format), read the test image into a shell environment as a base64 string, then save the string to a bash variable. If the image came from Animl and has an object in it, you'll also want to look up the test object's corresponding bounding box in the Animl database and save that to a variable, and then compose the JSON payload with [jq](https://stedolan.github.io/jq/download/) and finally send that payload to our torchserve endpoint via cURL.
@@ -90,13 +90,12 @@ The steps look like this (on a Mac). Just be sure to modify the variables for th
 1. Build payload
 
 ```bash
-IMG_STRING=$(base64 -i ~/Downloads/Southwest/2021-06-30_SYFR0218_copy.JPG)
-BBOX=[0.37166744470596313,0.5412790179252625,0.6243616342544556,0.7837801575660706]
+IMG_STRING=$(base64 -i ~/Downloads/DeepFaune-new-england-test-images/GMN69_IMG_0058.JPG)
+BBOX=[0.3839505612850189,0.45867589116096497,0.44392767548561096,0.5058512091636658]
 PAYLOAD=$( jq -n \
             --arg image "$IMG_STRING" \
             --arg bbox "$BBOX" \
             '{image: $image, bbox: $bbox}' )
-
 ```
 
 2. Invoke endpoint with payload:
@@ -105,17 +104,17 @@ PAYLOAD=$( jq -n \
 curl -i http://127.0.0.1:8080/invocations -F body=$PAYLOAD
 ```
 
-> **NOTE:** the model can also be queried at `http://127.0.0.1:8080/predictions/sdzwa-southwestv3`, but to test the endpoint that is queried during production (i.e. the sagemaker endpoint, which uses the configurations set in deployment/config.properties to adjust threads, worker count, and other container parameters), use `/invocations`.
+> **NOTE:** the model can also be queried at `http://127.0.0.1:8080/predictions/deepfaune-ne`, but to test the endpoint that is queried during production (i.e. the sagemaker endpoint, which uses the configurations set in deployment/config.properties to adjust threads, worker count, and other container parameters), use `/invocations`.
 
 The result should look something like:
 
 ```json
 {
-  "cougar": 0.9996892213821411,
-  "dog": 0.00017720309551805258,
-  "human": 2.2916185116628185e-5,
-  "fox": 2.152714841940906e-5,
-  "cat": 2.0666810087277554e-5
+  "Fisher": 0.948908269405365,
+  "American Marten": 0.048804379999637604,
+  "no-species": 0.0013461916241794825,
+  "Red Fox": 0.0004502132360357791,
+  "Gray Squirrel": 0.00017434393521398306
 }
 ```
 
@@ -126,9 +125,9 @@ Once you have run the model archiver step above, you're ready to upload that mod
 Run the following to copy the model to the appropriate s3 bucket where pytorch and tensorflow models (for MIRAv1) are stored:
 
 ```bash
-aws s3 cp model-store/sdzwa-southwestv3.mar s3://animl-model-zoo/sdzwa-southwestv3/
+aws s3 cp model-store/deepfaune-ne.mar s3://animl-model-zoo/deepfaune-ne/
 ```
 
-You'll also need to push the locally built docker image to the ECR repository. Since the images are large, it is fastest to do this from a sagemaker notebook instance in the sdzwa-southwestv3_deploy.ipynb.
+You'll also need to push the locally built docker image to the ECR repository. Since the images are large, it is fastest to do this from a sagemaker notebook instance in the deepfaune-ne_deploy.ipynb.
 
-Start up a Sagemaker Notebook instance and associate this repo with it to pull in the `sdzwa-southwestv3_deploy.ipynb` and supporting files with it. Step through that notebook to (re)build and push the Docker image to ECR, zip up our `.mar` file to prep it for deployment, create the model, endpoint config, and endpoint in Sagemaker, and finally test the endpoint.
+Start up a Sagemaker Notebook instance and associate this repo with it to pull in the `deepfaune-ne_deploy.ipynb` and supporting files with it. Step through that notebook to (re)build and push the Docker image to ECR, zip up our `.mar` file to prep it for deployment, create the model, endpoint config, and endpoint in Sagemaker, and finally test the endpoint.

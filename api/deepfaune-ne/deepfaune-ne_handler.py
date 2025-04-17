@@ -1,4 +1,4 @@
-"""Custom TorchServe model handler for SDZWA Southwest v3 model.
+"""Custom TorchServe model handler for DeepFaune New England model.
 """
 from ts.torch_handler.image_classifier import ImageClassifier
 import numpy as np
@@ -21,25 +21,16 @@ from PIL import Image, ImageOps
 # torch.set_num_threads(1)
 from ast import literal_eval
 
-# mean/std values from 
-# https://github.com/microsoft/CameraTraps/blob/main/classification/train_classifier.py
-MEANS = np.asarray([0.485, 0.456, 0.406])
-STDS = np.asarray([0.229, 0.224, 0.225])
-
 # image size
-IMG_SIZE = 299
+IMG_SIZE = 182
 
 class CustomImageClassifier(ImageClassifier):
     
     # define the transforms
     image_processing = transforms.Compose([
-        # torch.resize order is H,W
         transforms.Resize((IMG_SIZE, IMG_SIZE)),
-        # resizes smaller edge to IMG_SIZE
-        # transforms.Resize(IMG_SIZE, interpolation=Image.BICUBIC),
-        # transforms.CenterCrop(IMG_SIZE),
         transforms.ToTensor(),
-        # transforms.Normalize(mean=MEANS, std=STDS, inplace=True),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
 
     def preprocess(self, data):
