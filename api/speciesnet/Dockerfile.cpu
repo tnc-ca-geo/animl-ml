@@ -1,0 +1,17 @@
+# Dockerfile to build and run the speciesnet litserver
+
+ARG PYTHON_VERSION=3.11
+FROM python:$PYTHON_VERSION-slim
+
+RUN apt-get update && apt-get install -y git libgl1-mesa-glx libglib2.0-0
+
+# Install all dependencies first
+RUN pip install --upgrade pip setuptools wheel
+RUN pip install "speciesnet[server]"
+
+WORKDIR /app
+COPY . /app
+
+# Install litserve and requirements
+EXPOSE 8000
+CMD ["python", "/app/speciesnet/scripts/run_server.py"]

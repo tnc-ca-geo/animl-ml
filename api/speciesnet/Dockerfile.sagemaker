@@ -1,0 +1,47 @@
+# Custom Docker image to run speciesnet in SageMaker
+
+FROM public.ecr.aws/docker/library/python:3.11-slim
+
+# Install system packages and clean up in same layer
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    pkg-config \
+    libhdf5-dev \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python packages efficiently
+COPY requirements.txt /opt/ml/requirements.txt
+RUN pip install --no-cache-dir -r /opt/ml/requirements.txt \
+    && pip install --no-cache-dir 'speciesnet[server]' kagglehub \
+    && find /usr/local/lib/python3.11/site-packages -name "*.pyc" -delete
+
+# Create directories required by SageMaker
+RUN mkdir -p /opt/ml/{model,input,output}
+
+# Set KaggleHub cache directory
+RUN mkdir -p /opt/ml/model/speciesnet
+ENV KAGGLEHUB_CACHE=/opt/ml/model/speciesnet
+
+# Download model during build
+RUN python -c "import kagglehub; kagglehub.model_download('google/speciesnet/keras/v4.0.0a')"
+
+# Copy model server code
+COPY serve.py /opt/ml/code/serve.py
+
+# Environment variables for SageMaker
+ENV PYTHONUNBUFFERED=TRUE
+ENV PYTHONDONTWRITEBYTECODE=TRUE
+ENV PATH="/opt/ml/code:${PATH}"
+
+# Set working directory
+WORKDIR /opt/ml/code
+
+# Expose the port that the FastAPI server will run on
+EXPOSE 8080
+
+# Entry point for SageMaker
+ENTRYPOINT ["python", "serve.py"]
