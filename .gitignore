@@ -131,6 +131,7 @@ dmypy.json
 # TF and PyTorch model files
 *.pb
 *.pt
+*.pth
 
 # ONNX compiled models
 *.onnxlib
