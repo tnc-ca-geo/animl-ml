@@ -1,3 +1,5 @@
+# FastAPI server that wraps around the SpeciesNet Litserve Class
+
 import json
 import logging
 import os

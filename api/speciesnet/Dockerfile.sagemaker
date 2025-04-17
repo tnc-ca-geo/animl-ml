@@ -2,23 +2,22 @@
 
 FROM public.ecr.aws/docker/library/python:3.11-slim
 
-# Install system packages
+# Install system packages and clean up in same layer
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
     pkg-config \
     libhdf5-dev \
-    libgl1-mesa-glx \ 
-    libglib2.0-0
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy requirement files
+# Install Python packages efficiently
 COPY requirements.txt /opt/ml/requirements.txt
-
-# Install Python packages
-RUN pip install -r /opt/ml/requirements.txt
-
-# Install speciesnet
-RUN pip install 'speciesnet[server]'
+RUN pip install --no-cache-dir -r /opt/ml/requirements.txt \
+    && pip install --no-cache-dir 'speciesnet[server]' \
+    && find /usr/local/lib/python3.11/site-packages -name "*.pyc" -delete
 
 # Copy model server code
 COPY serve.py /opt/ml/code/serve.py
