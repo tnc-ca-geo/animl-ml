@@ -63,7 +63,9 @@ model_loader.start_loading()
 @app.get("/ping")
 async def ping():
     """Health check endpoint that returns healthy even while model is loading"""
+    print('Checking health')
     if model_loader.error:
+        print("Model failed to load")
         return JSONResponse(content={"status": "unhealthy", "error": model_loader.get_error()}, status_code=500)
     return JSONResponse(content={"status": "healthy"}, status_code=200)
 
