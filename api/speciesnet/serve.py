@@ -13,13 +13,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 from speciesnet.scripts.run_server import SpeciesNetLitAPI
-from speciesnet import DEFAULT_MODEL
-
 # Initialize FastAPI app
 app = FastAPI()
 
-# Initialize SpeciesNet API
-model_name = DEFAULT_MODEL
+# Initialize SpeciesNet API with pre-downloaded model
+model_name = "/opt/ml/model/speciesnet/models/google/speciesnet/keras/v4.0.0a/3"
 try:
     api = SpeciesNetLitAPI(model_name=model_name, geofence=True)
     api.setup(device=None)  # Initialize the model
@@ -45,7 +43,7 @@ async def invoke(request: Request):
         # Get raw request body
         body = await request.body()
         input_data = json.loads(body)
-        
+
         # Convert SageMaker format to SpeciesNet format
         if 'image_data' in input_data:
             # Create a temporary file for the image
