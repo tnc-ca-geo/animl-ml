@@ -27,7 +27,7 @@ RUN mkdir -p /opt/ml/model/speciesnet
 ENV KAGGLEHUB_CACHE=/opt/ml/model/speciesnet
 
 # Download model during build
-RUN python -c "import kagglehub; kagglehub.model_download('google/speciesnet/keras/v4.0.0a')"
+RUN python -c "import kagglehub; kagglehub.model_download('google/speciesnet/pytorch/v4.0.1a')"
 
 # Copy model server code
 COPY serve.py /opt/ml/code/serve.py
