@@ -56,7 +56,19 @@ The FastAPI Server (serve.py) provides support to deploy SpeciesNet on SageMaker
      ```bash
      curl http://localhost:8080/ping
      ```
-   - Prediction endpoint: run the `tests/test_request.py` script: `cd tests && python test_request.py`
+   - Run automated tests:
+     ```bash
+     cd tests && python -m pytest test_request.py
+     ```
+
+     The tests verify:
+     - Health check endpoint functionality
+     - Default settings (both detection and classification)
+     - Classification-only mode
+     - Detection-only mode
+     - Without geofencing
+
+     Each test validates the response structure and the number of predictions (detections/classifications) returned by the model.
 
 ## Deploying to SageMaker
 
