@@ -5,11 +5,14 @@ import base64
 import json
 import requests
 from typing import Optional, Dict, Any
-import pytest
+from PIL import Image
+from io import BytesIO
+from speciesnet import draw_bboxes
 from fixtures.responses import (
     HEALTH_CHECK_RESPONSE,
     DEFAULT_SETTINGS_RESPONSE,
     CLASSIFIER_ONLY_RESPONSE,
+    CLASSIFIER_WITH_BBOX_RESPONSE,
     DETECTOR_ONLY_RESPONSE,
     NO_GEOFENCE_RESPONSE
 )
@@ -26,7 +29,8 @@ def make_request(
     components: Optional[str] = None,
     geofence: Optional[bool] = None,
     batch_size: Optional[int] = None,
-    country: Optional[str] = None
+    country: Optional[str] = None,
+    bbox: Optional[list[float]] = None
 ) -> Dict[str, Any]:
     """Make a request to the SpeciesNet server with given parameters."""
     # Build URL with query parameters
@@ -43,6 +47,8 @@ def make_request(
     payload = {"image_data": image_base64}
     if country is not None:
         payload["country"] = country
+    if bbox is not None:
+        payload["bbox"] = bbox
 
     # Make request
     response = requests.post(url, params=params, json=payload)
@@ -97,6 +103,37 @@ def test_detector_only(image_base64):
     assert "classifications" not in result["predictions"][0]
     expected_detections_count = len(DETECTOR_ONLY_RESPONSE["predictions"][0]["detections"])
     assert len(result["predictions"][0]["detections"]) == expected_detections_count
+
+def test_classifier_with_bbox(image_base64):
+    """Test API with classifier component and specified bbox."""
+    print("\nTesting classifier with bbox...")
+
+    # Decode and load image
+    image_bytes = base64.b64decode(image_base64)
+    image = Image.open(BytesIO(image_bytes))
+
+    # Use first detected bbox from DETECTOR_ONLY_RESPONSE
+    first_detection = DETECTOR_ONLY_RESPONSE["predictions"][0]["detections"][1]
+    bbox = first_detection["bbox"]
+
+    print("Using bbox:", bbox)
+
+    # Draw bboxes on image copy to test
+    image_copy = image.copy()
+    image_copy = draw_bboxes(image_copy, DETECTOR_ONLY_RESPONSE["predictions"][0]["detections"])
+    image_copy.save("test_output_with_bbox.png")
+
+    result = make_request(
+        image_base64,
+        components="classifier",
+        bbox=bbox
+    )
+    print("Classifier with bbox response:")
+    print(json.dumps(result, indent=2))
+
+    expected_classes_count = len(CLASSIFIER_WITH_BBOX_RESPONSE["predictions"][0]["classifications"]["classes"])
+    assert len(result["predictions"][0]["classifications"]["classes"]) == expected_classes_count
+    assert "detections" not in result["predictions"][0]
 
 def test_no_geofencing(image_base64):
     """Test API with geofencing disabled."""

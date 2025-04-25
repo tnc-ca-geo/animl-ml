@@ -95,8 +95,21 @@ async def invoke(
 
             # Run prediction based on components
             if components == "classifier":
+                # Get bbox from request or use default [x_min, y_min, width, height]
+                bbox = input_data.get('bbox', [0, 0, 1, 1])
+
+                # Create detections dict with bbox
+                detections_dict = {
+                    temp_path: {
+                        "detections": [{
+                            "bbox": bbox
+                        }]
+                    }
+                }
+
                 predictions_dict = model.classify(
                     instances_dict=instances_dict,
+                    detections_dict=detections_dict,
                     batch_size=batch_size
                 )
             elif components == "detector":
