@@ -73,3 +73,9 @@ The FastAPI Server (serve.py) provides support to deploy SpeciesNet on SageMaker
 ## Deploying to SageMaker
 
 Use a SageMaker Notebook instance to run the `deploy_to_sagemaker.ipynb` notebook. The notebook walks through creating model on SageMaker, preparing the endpoint, deploying, and testing.
+
+
+## Misc
+
+**Taxonomy Transformer**
+The `transform_taxonomy.py` script converts semicolon-separated taxonomy data into JSON format. The label data is available when [you download the model](https://www.kaggle.com/models/google/speciesnet/pyTorch). It creates a JSON file which is loaded to the animl-api MongoDB. To run: `python transform_taxonomy.py input_file output_file`
