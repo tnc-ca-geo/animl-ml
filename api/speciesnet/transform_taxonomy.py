@@ -33,11 +33,14 @@ def transform_taxonomy(input_file: str, output_file: str):
             # Split the line by semicolons
             parts = line.strip().split(';')
             
+            # Clean the name by removing '.' and '$'
+            name = parts[-1].replace('.', '').replace('$', '')
+
             # Create JSON object
             taxonomy_obj = {
                 "_id": parts[0],
                 "taxonomy": ";".join(parts[1:-1]),
-                "name": parts[-1],
+                "name": name,
                 "color": random.choice(COLORS)
             }
             
