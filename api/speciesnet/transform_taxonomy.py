@@ -22,7 +22,13 @@ def transform_taxonomy(input_file: str, output_file: str):
         input_file (str): Path to input taxonomy file
         output_file (str): Path to output JSON file
     """
-    output_data = []
+    output_data = {
+        "_id": "speciesnet",
+        "description": "Google SpeciesNet Model",
+        "version": "v4.0.1a",
+        "defaultConfThreshold": 0.5,
+    }
+    categories = []
     
     with open(input_file, 'r', encoding='utf-8') as f:
         for line in f:
@@ -36,18 +42,23 @@ def transform_taxonomy(input_file: str, output_file: str):
             # Clean the name by removing '.' and '$'
             name = parts[-1].replace('.', '').replace('$', '')
 
+            # Store taxonomy information
+            # TODO: this will need a migration in MongoDB so for now omit.
+            # TODO: once migration is setup, uncomment the following line and add it to the JSON object.
+            # taxonomy = ";".join(parts[1:-1])
+
             # Create JSON object
             taxonomy_obj = {
                 "_id": parts[0],
-                "taxonomy": ";".join(parts[1:-1]),
                 "name": name,
                 "color": random.choice(COLORS)
             }
             
-            output_data.append(taxonomy_obj)
+            categories.append(taxonomy_obj)
     
     # Write to JSON file
     with open(output_file, 'w', encoding='utf-8') as f:
+        output_data["categories"] = categories
         json.dump(output_data, f, indent=2)
 
 def main():
