@@ -33,25 +33,24 @@ def make_request(
     bbox: Optional[list[float]] = None
 ) -> Dict[str, Any]:
     """Make a request to the SpeciesNet server with given parameters."""
-    # Build URL with query parameters
+    # Build URL
     url = 'http://localhost:8080/invocations'
-    params = {}
-    if components is not None:
-        params['components'] = components
-    if geofence is not None:
-        params['geofence'] = str(geofence).lower()
-    if batch_size is not None:
-        params['batch_size'] = batch_size
 
-    # Build payload
+    # Build payload with all parameters
     payload = {"image_data": image_base64}
+    if components is not None:
+        payload["components"] = components
+    if geofence is not None:
+        payload["geofence"] = geofence  # No need to convert to string
+    if batch_size is not None:
+        payload["batch_size"] = batch_size
     if country is not None:
         payload["country"] = country
     if bbox is not None:
         payload["bbox"] = bbox
 
     # Make request
-    response = requests.post(url, params=params, json=payload)
+    response = requests.post(url, json=payload)
     response.raise_for_status()
     return response.json()
 

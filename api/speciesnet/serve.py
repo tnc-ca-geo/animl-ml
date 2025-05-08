@@ -3,9 +3,7 @@
 import json
 import logging
 import os
-from typing import Optional, Literal
-
-from fastapi import FastAPI, Request, Query
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 import uvicorn
 from speciesnet import SpeciesNet
@@ -41,28 +39,36 @@ async def ping():
     return JSONResponse(content={"status": "unhealthy"}, status_code=500)
 
 @app.post("/invocations")
-async def invoke(
-    request: Request,
-    components: Optional[Literal["all", "classifier", "detector"]] = Query(
-        default="all", description="Model components to run"
-    ),
-    geofence: bool = Query(
-        default=True, description="Whether to enable geofencing"
-    ),
-    batch_size: int = Query(
-        default=8, description="Batch size for classifier inference"
-    )
-):
+async def invoke(request: Request):
     """SageMaker invocation endpoint with extended options"""
     try:
         # Get raw request body
         body = await request.body()
         input_data = json.loads(body)
 
+        # Validate required fields and set defaults
         if 'image_data' not in input_data:
             return JSONResponse(
                 status_code=400,
                 content={"error": "Input must contain 'image_data' field"}
+            )
+
+        # Get  parameters with defaults
+        components = input_data.get('components', 'all')
+        if components not in ['all', 'classifier', 'detector']:
+            return JSONResponse(
+                status_code=400,
+                content={"error": "components must be one of: all, classifier, detector"}
+            )
+
+        geofence = input_data.get('geofence', True)
+        batch_size = input_data.get('batch_size', 8)
+
+        # Validate batch_size is integer
+        if not isinstance(batch_size, int):
+            return JSONResponse(
+                status_code=400,
+                content={"error": "batch_size must be an integer"}
             )
 
         # Create temporary file for the image
@@ -83,7 +89,7 @@ async def invoke(
             }]
         }
 
-        # Add optional country parameter
+        # Add  country parameter
         # TODO: validate this is 3 letter ISO
         if 'country' in input_data:
             instances_dict['instances'][0]['country'] = input_data['country']
