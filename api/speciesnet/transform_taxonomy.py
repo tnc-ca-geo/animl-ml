@@ -43,15 +43,14 @@ def transform_taxonomy(input_file: str, output_file: str):
             name = parts[-1].replace('.', '').replace('$', '')
 
             # Store taxonomy information
-            # TODO: this will need a migration in MongoDB so for now omit.
-            # TODO: once migration is setup, uncomment the following line and add it to the JSON object.
-            # taxonomy = ";".join(parts[1:-1])
+            taxonomy = ";".join(parts[1:-1])
 
             # Create JSON object
             taxonomy_obj = {
                 "_id": parts[0],
                 "name": name,
-                "color": random.choice(COLORS)
+                "color": random.choice(COLORS),
+                "taxonomy": taxonomy,
             }
             
             categories.append(taxonomy_obj)
