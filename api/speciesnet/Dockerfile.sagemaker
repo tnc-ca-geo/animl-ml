@@ -36,6 +36,7 @@ COPY serve.py /opt/ml/code/serve.py
 ENV PYTHONUNBUFFERED=TRUE
 ENV PYTHONDONTWRITEBYTECODE=TRUE
 ENV PATH="/opt/ml/code:${PATH}"
+ENV MODEL_PATH="/opt/ml/model/speciesnet/models/google/speciesnet/pytorch/v4.0.1a/1"
 
 # Set working directory
 WORKDIR /opt/ml/code

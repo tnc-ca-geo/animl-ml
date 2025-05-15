@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 
 # Initialize SpeciesNet model
-model_name = "/opt/ml/model/speciesnet/models/google/speciesnet/pytorch/v4.0.1a/1"
+model_name = os.getenv('MODEL_PATH', "/opt/ml/model/speciesnet/models/google/speciesnet/pytorch/v4.0.1a/1")
 try:
     model = SpeciesNet(
         model_name=model_name,
