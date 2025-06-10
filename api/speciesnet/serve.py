@@ -94,6 +94,10 @@ async def invoke(request: Request):
         if 'country' in input_data:
             instances_dict['instances'][0]['country'] = input_data['country']
 
+        # Add admin1_region parameter
+        if 'admin1_region' in input_data:
+            instances_dict['instances'][0]['admin1_region'] = input_data['admin1_region']
+
         print('instances_dict', instances_dict)
         try:
             # Update geofencing setting
