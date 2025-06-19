@@ -30,6 +30,7 @@ def make_request(
     geofence: Optional[bool] = None,
     batch_size: Optional[int] = None,
     country: Optional[str] = None,
+    admin1_region: Optional[str] = None,
     bbox: Optional[list[float]] = None
 ) -> Dict[str, Any]:
     """Make a request to the SpeciesNet server with given parameters."""
@@ -46,6 +47,8 @@ def make_request(
         payload["batch_size"] = batch_size
     if country is not None:
         payload["country"] = country
+    if admin1_region is not None:
+        payload["admin1_region"] = admin1_region
     if bbox is not None:
         payload["bbox"] = bbox
 
