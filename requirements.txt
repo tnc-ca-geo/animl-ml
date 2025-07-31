@@ -25,7 +25,7 @@ isodate==0.6.0
 jedi==0.17.2
 jmespath==0.9.5
 jupyter-client==6.1.7
-jupyter-core==4.7.0
+jupyter-core==4.11.2
 kiwisolver==1.1.0
 matplotlib==3.2.1
 msrest==0.6.19
