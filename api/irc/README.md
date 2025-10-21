@@ -1,6 +1,6 @@
 # Irvine Ranch Conservancy classifier Deployment Instructions
 
-The [IRC v1 classifier](https://github.com/ttgminh/Irvine-Ranch-Conservancy-Animal-Detect/tree/main) was trained by [The Irvine Ranch Conservancy](https://www.irconservancy.org/) using the [mewc-train](https://github.com/zaandahl/mewc-train) workflow, which trains an efficientnetv2 model architecture in Tensorflow v1. The model predicts 16 classes.
+The [IRC v1 classifier](https://github.com/ttgminh/Irvine-Ranch-Conservancy-Animal-Detect/tree/main) was trained by [The Irvine Ranch Conservancy](https://www.irconservancy.org/) using the [mewc-train v1](https://github.com/zaandahl/mewc-train) workflow, which trains an efficientnetv2 model architecture in Tensorflow v1. The model predicts 16 classes.
 
 The following instructions are for converting the `.h5` Keras model to a PyTorch-compatible format and deploying the PyTorch model to a Sagemaker Serverless Endpoint served in a Torchserve container. In order to create and deploy the model archive from scratch, we need to work across two different environments:
 
@@ -29,20 +29,20 @@ aws s3 sync s3://animl-model-zoo/irc/ model-weights
 
 > **NOTE:** if there's a 'sdzwa-andesv1_compiled_cpu.pt' file present, you can skip the next step and jump to creating the `.mar` file.
 
-<!-- ## Load the weights into PyTorch locally and re-compile to torchserve for CPU
+## Load the weights into PyTorch locally and re-compile to torchserve for CPU
 
 Create and activate the Conda environment by running the following form this directory:
 
 ```bash
 conda env create -f environment.yml
-conda activate andes-classifier
+conda activate irc-classifier
 ```
 
-Then step through `sdzwa-andesv1_compile.ipynb`. The notebook should produce a torchscript model 'sdzwa-andesv1_compiled_cpu.pt' in the `./model-weights/` directory.
+Then step through `irc_compile.ipynb`. The notebook should produce a torchscript model 'irc_compiled_cpu.pt' in the `./model-weights/` directory.
 
 Note for others using these steps to deploy a different model: the versions of `torch` and `torchvision` that you pin in your `Dockerfile` used for serving must match the versions you use when compiling the model to torchscript. To check which versions you're using in your venv use `pip freeze` and to bump the versions up (or down) use `pip install --upgrade` (e.g. `pip install --upgrade torchvision==0.15.1`).
 
-## Install and run `torch-model-archiver` to generate .mar file
+<!-- ## Install and run `torch-model-archiver` to generate .mar file
 
 Full documentation for creating a torchserve model archive (.mar) file can be found [here](https://github.com/pytorch/serve/tree/master/model-archiver#creating-a-model-archive).
 
