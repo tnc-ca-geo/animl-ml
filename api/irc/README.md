@@ -1,6 +1,6 @@
 # Irvine Ranch Conservancy classifier Deployment Instructions
 
-The [IRC v1 classifier](https://github.com/ttgminh/Irvine-Ranch-Conservancy-Animal-Detect/tree/main) was trained by [The Irvine Ranch Conservancy](https://www.irconservancy.org/) using the [mewc-train](https://github.com/zaandahl/mewc-train) workflow, which trains an efficientnetv2 model architecture in Tensorflow.. The model predicts 16 classes.
+The [IRC v1 classifier](https://github.com/ttgminh/Irvine-Ranch-Conservancy-Animal-Detect/tree/main) was trained by [The Irvine Ranch Conservancy](https://www.irconservancy.org/) using the [mewc-train](https://github.com/zaandahl/mewc-train) workflow, which trains an efficientnetv2 model architecture in Tensorflow v1. The model predicts 16 classes.
 
 The following instructions are for converting the `.h5` Keras model to a PyTorch-compatible format and deploying the PyTorch model to a Sagemaker Serverless Endpoint served in a Torchserve container. In order to create and deploy the model archive from scratch, we need to work across two different environments:
 
@@ -19,17 +19,17 @@ The following instructions are for converting the `.h5` Keras model to a PyTorch
    3. create a serverless endpoint configuration
    4. deploy and test a serverless endpoint
 
-<!-- ## Download weights model
+## Download weights model
 
 From this directory, run:
 
 ```bash
-aws s3 sync s3://animl-model-zoo/sdzwa-andesv1/ model-weights
+aws s3 sync s3://animl-model-zoo/irc/ model-weights
 ```
 
 > **NOTE:** if there's a 'sdzwa-andesv1_compiled_cpu.pt' file present, you can skip the next step and jump to creating the `.mar` file.
 
-## Load the weights into PyTorch locally and re-compile to torchserve for CPU
+<!-- ## Load the weights into PyTorch locally and re-compile to torchserve for CPU
 
 Create and activate the Conda environment by running the following form this directory:
 
