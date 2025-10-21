@@ -27,7 +27,7 @@ From this directory, run:
 aws s3 sync s3://animl-model-zoo/irc/ model-weights
 ```
 
-> **NOTE:** if there's a 'sdzwa-andesv1_compiled_cpu.pt' file present, you can skip the next step and jump to creating the `.mar` file.
+> **NOTE:** if there's a 'irc_compiled_cpu.pt' file present, you can skip the next step and jump to creating the `.mar` file.
 
 ## Load the weights into PyTorch locally and re-compile to torchserve for CPU
 
@@ -42,7 +42,7 @@ Then step through `irc_compile.ipynb`. The notebook should produce a torchscript
 
 Note for others using these steps to deploy a different model: the versions of `torch` and `torchvision` that you pin in your `Dockerfile` used for serving must match the versions you use when compiling the model to torchscript. To check which versions you're using in your venv use `pip freeze` and to bump the versions up (or down) use `pip install --upgrade` (e.g. `pip install --upgrade torchvision==0.15.1`).
 
-<!-- ## Install and run `torch-model-archiver` to generate .mar file
+## Install and run `torch-model-archiver` to generate .mar file
 
 Full documentation for creating a torchserve model archive (.mar) file can be found [here](https://github.com/pytorch/serve/tree/master/model-archiver#creating-a-model-archive).
 
@@ -57,10 +57,12 @@ pip install torch-model-archiver
 to install dependencies, then the following to create the archive:
 
 ```bash
-torch-model-archiver --model-name sdzwa-andesv1 --version 3.0.0 --serialized-file model-weights/andes_v1_compiled_cpu.pt --extra-files index_to_name.json --handler sdzwa-andesv1_handler.py
-mv sdzwa-andesv1.mar model-store/sdzwa-andesv1.mar
+torch-model-archiver --model-name irc --version 2.0 --serialized-file model-weights/irc_compiled_cpu.pt --extra-files index_to_name.json --handler irc_handler.py
+mkdir model-store
+mv irc.mar model-store/irc.mar
 ```
 
+<!--
 ## Locally build, serve, and test the torchscript model with torchserve
 
 We can now locally test this model prior to deploying.
