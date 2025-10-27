@@ -132,6 +132,9 @@ dmypy.json
 *.pb
 *.pt
 *.pth
+*.h5
+*.ckpt
+*.tflite
 
 # ONNX compiled models
 *.onnxlib
