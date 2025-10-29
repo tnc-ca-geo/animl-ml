@@ -25,7 +25,9 @@ ENV MODEL_PATH=/opt/ml/models/${MODEL_NAME}/${MODEL_VERSION}/
 
 # Copy our model folder to the container
 COPY ./export/Servo/${MODEL_VERSION}/ ${MODEL_PATH}
-# COPY ./export/Servo/code/ /opt/ml/models/${MODEL_NAME}/code/
+
+# Copy class map to container
+COPY ./index_to_name.json /opt/ml/code/
 
 # Set working directory
 WORKDIR /opt/ml/code

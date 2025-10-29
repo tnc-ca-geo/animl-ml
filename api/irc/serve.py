@@ -12,15 +12,18 @@ import base64
 from PIL import Image, ImageOps
 import io
 from ast import literal_eval
+from itertools import islice
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
+  
 # Initialize FastAPI app
 app = FastAPI()
 
 TF_SERVING_URL = "http://localhost:8501/v1/models/irc:predict"
+CLASS_MAP_PATH = '/opt/ml/code/index_to_name.json'
+INPUT_SIZE = 300 # model input size
 
 @app.get("/ping")
 async def ping():
@@ -94,92 +97,42 @@ async def invoke(request: Request):
             if image.mode != 'RGB':
                 image = image.convert(mode='RGB')
             
-            # crop, resize, and convert to tensor
+            # crop, resize
             image = crop(image, bbox)
-            # image = self.image_processing(image)
-            # print(f"tensor shape fully processed: {image.shape}")
-
-        # Create temporary file for the image
-
-        # Decode and save image
-        # image_bytes = base64.b64decode(input_data['image'])
-        # image = Image.open(io.BytesIO(image_bytes))
-        temp_path = "/tmp/temp_image.jpg"
-        image.save(temp_path)
-
-        # # Create instances dict
-        # instances_dict = {
-        #     "instances": [{
-        #         "filepath": temp_path
-        #     }]
-        # }
+            image = image.resize((INPUT_SIZE, INPUT_SIZE))
+            logger.info(f"image size after resize: {image.size}")
       
         image_array = np.array(image)  # shape: (H, W, 3)
+        logger.info(f"image array shape: {image_array.shape}")
         instances_dict = {
             "instances": [image_array.tolist()]
         }
 
-        # # Add  country parameter
-        # # TODO: validate this is 3 letter ISO
-        # if 'country' in input_data:
-        #     instances_dict['instances'][0]['country'] = input_data['country']
-
-        # # Add admin1_region parameter
-        # if 'admin1_region' in input_data:
-        #     instances_dict['instances'][0]['admin1_region'] = input_data['admin1_region']
-
-        # print('instances_dict', instances_dict)
         try:
-            # # Update geofencing setting
-            # model.geofence = geofence
-
-            # # Run prediction based on components
-            # if components == "classifier":
-            #     # Get bbox from request or use default [x_min, y_min, width, height]
-            #     bbox = input_data.get('bbox', [0, 0, 1, 1])
-
-            #     # Create detections dict with bbox
-            #     detections_dict = {
-            #         temp_path: {
-            #             "detections": [{
-            #                 "bbox": bbox
-            #             }]
-            #         }
-            #     }
-
-            #     predictions_dict = model.classify(
-            #         instances_dict=instances_dict,
-            #         detections_dict=detections_dict,
-            #         batch_size=batch_size
-            #     )
-            # elif components == "detector":
-            #     predictions_dict = model.detect(
-            #         instances_dict=instances_dict
-            #     )
-            # else:  # all components
-            #     predictions_dict = model.predict(
-            #         instances_dict=instances_dict,
-            #         batch_size=batch_size
-            #     )
-
+            class_map = loadClassMap(CLASS_MAP_PATH)
+            logger.info(f"Class map loaded with {len(class_map)} classes.")
+            logger.info(f"Class map: {class_map}")
 
             # Forward to TensorFlow Serving
             logger.info("Sending request to TensorFlow Serving...")
             tf_response = requests.post(TF_SERVING_URL, json=instances_dict)
             logger.info(f"TensorFlow Serving response status: {tf_response.status_code}")
             print(f"TensorFlow Serving response content: {tf_response.json()}")
-            
-            # Clean up
-            if os.path.exists(temp_path):
-                os.remove(temp_path)
+            pred = tf_response.json().get('predictions', [0])[0]
+
+            classifications = {}
+            for i in range(len(pred)):
+                classifications[class_map[str(i)]] = float(pred[i])
+
+            # sort and return top five classifications
+            top_five = dict(sorted(classifications.items(), key=lambda item: item[1], reverse=True)[:5])
+            logger.info(f"top five classifications: {top_five}")
 
             if tf_response is None:
                 raise Exception("No predictions returned from model")
 
-            return JSONResponse(content=tf_response.json(), status_code=tf_response.status_code)
+            return JSONResponse(content=top_five, status_code=tf_response.status_code)
         except Exception as e:
-            if os.path.exists(temp_path):
-                os.remove(temp_path)
             return JSONResponse(
                 status_code=500,
                 content={"error": f"Model error: {str(e)}"}
@@ -241,6 +194,12 @@ def crop(img, bbox_rel):
     print(f"cropped image size: {crop.size}")
 
     return crop
+
+def loadClassMap(class_map_path):
+    """Load class map from JSON file"""
+    with open(class_map_path, 'r') as f:
+        class_map = json.load(f)
+    return class_map
 
 def main():
     """Run the server"""
