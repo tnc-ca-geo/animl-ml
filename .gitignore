@@ -135,6 +135,7 @@ dmypy.json
 *.h5
 *.ckpt
 *.tflite
+variables.*
 
 # ONNX compiled models
 *.onnxlib
