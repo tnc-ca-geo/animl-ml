@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import requests
+import numpy as np
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 import uvicorn
@@ -106,11 +107,16 @@ async def invoke(request: Request):
         temp_path = "/tmp/temp_image.jpg"
         image.save(temp_path)
 
-        # Create instances dict
+        # # Create instances dict
+        # instances_dict = {
+        #     "instances": [{
+        #         "filepath": temp_path
+        #     }]
+        # }
+      
+        image_array = np.array(image)  # shape: (H, W, 3)
         instances_dict = {
-            "instances": [{
-                "filepath": temp_path
-            }]
+            "instances": [image_array.tolist()]
         }
 
         # # Add  country parameter
@@ -122,7 +128,7 @@ async def invoke(request: Request):
         # if 'admin1_region' in input_data:
         #     instances_dict['instances'][0]['admin1_region'] = input_data['admin1_region']
 
-        print('instances_dict', instances_dict)
+        # print('instances_dict', instances_dict)
         try:
             # # Update geofencing setting
             # model.geofence = geofence
@@ -158,7 +164,10 @@ async def invoke(request: Request):
 
 
             # Forward to TensorFlow Serving
+            logger.info("Sending request to TensorFlow Serving...")
             tf_response = requests.post(TF_SERVING_URL, json=instances_dict)
+            logger.info(f"TensorFlow Serving response status: {tf_response.status_code}")
+            print(f"TensorFlow Serving response content: {tf_response.json()}")
             
             # Clean up
             if os.path.exists(temp_path):
