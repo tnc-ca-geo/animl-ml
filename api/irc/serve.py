@@ -28,8 +28,12 @@ async def invoke(request: Request):
     """SageMaker invocation endpoint with extended options"""
     logger.info("invoke received")
     try:
+        logger.info("Reading request body...")
+        logger.info(f"Content-Type: {request.headers.get('content-type')}")
+
         # Get raw request body
         body = await request.body()
+        logger.info(f"Request body: {body.decode('utf-8')}")
         input_data = json.loads(body)
 
         # Validate required fields and set defaults
