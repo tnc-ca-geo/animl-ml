@@ -28,25 +28,15 @@ INPUT_SIZE = 300 # model input size
 @app.get("/ping")
 async def ping():
     """Health check endpoint required by SageMaker"""
-    logger.info("ping received")
     return JSONResponse(content={"status": "healthy"}, status_code=200)
 
 @app.post("/invocations")
 async def invoke(request: Request):
     """SageMaker invocation endpoint with extended options"""
-    logger.info("invoke received")
     try:
-        logger.info("Reading request body...")
         logger.info(f"Content-Type: {request.headers.get('content-type')}")
 
-        # Get raw request body
-        # body = await request.body()
-        # logger.info(f"Request body: {body.decode('utf-8')}")
-        # input_data = json.loads(body.decode('utf-8'))
         input_data = await request.json()
-        
-        # print key input parameters
-        logger.info('input_data keys: %s', input_data.keys())
 
         # Validate required fields
         if 'image' not in input_data:
@@ -54,24 +44,6 @@ async def invoke(request: Request):
                 status_code=400,
                 content={"error": "Input must contain 'image' field"}
             )
-        
-        # # Get  parameters with defaults
-        # components = input_data.get('components', 'all')
-        # if components not in ['all', 'classifier', 'detector']:
-        #     return JSONResponse(
-        #         status_code=400,
-        #         content={"error": "components must be one of: all, classifier, detector"}
-        #     )
-
-        # geofence = input_data.get('geofence', True)
-        # batch_size = input_data.get('batch_size', 8)
-
-        # # Validate batch_size is integer
-        # if not isinstance(batch_size, int):
-        #     return JSONResponse(
-        #         status_code=400,
-        #         content={"error": "batch_size must be an integer"}
-        #     )
 
         # Get bbox from request or use default [x_min, y_min, width, height]
         bbox = input_data.get('bbox', [0, 0, 1, 1])
