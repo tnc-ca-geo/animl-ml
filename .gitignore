@@ -132,6 +132,10 @@ dmypy.json
 *.pb
 *.pt
 *.pth
+*.h5
+*.ckpt
+*.tflite
+variables.*
 
 # ONNX compiled models
 *.onnxlib
@@ -143,6 +147,9 @@ dmypy.json
 # ignore models
 models/*/*
 !models/*/code
+
+# ignore tar.gz files
+*.tar.gz
 
 # ignore tmp
 tmp/
