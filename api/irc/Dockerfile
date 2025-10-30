@@ -2,6 +2,12 @@ FROM tensorflow/serving AS tfserving
 
 FROM python:3.9-slim
 
+# Install system packages and clean up in same layer
+RUN apt-get update && apt-get install -y \
+    curl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install FastAPI and dependencies
 COPY requirements.txt /opt/ml/requirements.txt
 RUN pip install --no-cache-dir -r /opt/ml/requirements.txt
