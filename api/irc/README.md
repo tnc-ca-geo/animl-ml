@@ -71,6 +71,56 @@ aws s3 cp --recursive ./exported-model s3://animl-model-zoo/irc/exported-model
 
 ## Running the FastAPI/Tensorflow Serving container locally
 
+The FastAPI Server (serving/serve.py) provides support to deploy our custom Tensorflow Serving container on SageMaker. It exposes the necessary /ping and /invocation API routes for SageMaker hosting and provides some image pre-processing steps before passing the request on to Tensorflow Serving for a prediction.
+
+To run it locally make sure you have the latest [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed. If you are running Docker Desktop on Apple Silicon chips (M1/M2/M3 etc.), it's critical that you choose "Docker VMM" as your Virtual Machine Manager in your Docker Desktop settings, as attempting to run amd64 images (which tensorflow-serving is) on an arm64 host can be problematic without it.
+
+```bash
+# build the container
+docker build --platform=linux/amd64 -t irc-tf-fastapi .
+
+# and run it
+docker run --rm --platform=linux/amd64 -p 8080:8080 irc-tf-fastapi
+```
+
+### Testing the endpoint locally
+
+A couple of things need to happen to test the endpoint locally via cURL. To build the payload we need an image to test (preferably from Animl because we likely already have bounding boxes for it in the correct format), read the test image into a shell environment as a base64 string, then save the string to a bash variable. If the image came from Animl and has an object in it, you'll also want to look up the test object's corresponding bounding box in the Animl database and save that to a variable, and then compose the JSON payload with [jq](https://stedolan.github.io/jq/download/) and finally send that payload to our torchserve endpoint via cURL.
+
+The steps look like this (on a Mac). Just be sure to modify the variables for the image path and bounding box you're testing.
+
+1. Build payload
+
+```bash
+IMG_STRING=$(base64 -i ./tests/test-data/coyote-test.jpg) \
+BBOX=[0.4319087266921997,0.21275195479393005,0.6099987030029297,0.3272196650505066] \
+PAYLOAD=$( jq -n \
+            --arg image "$IMG_STRING" \
+            --arg bbox "$BBOX" \
+            '{image: $image, bbox: $bbox}' )
+
+```
+
+2. Invoke endpoint with payload:
+
+```bash
+curl -X POST http://127.0.0.1:8080/invocations \
+  -H "Content-Type: application/json" \
+  -d $PAYLOAD
+```
+
+The result should look something like:
+
+```json
+{
+  "coyote": 0.990233779,
+  "mountain lion": 0.0020499716,
+  "mule deer": 0.00128549989,
+  "bobcat": 0.00125635625,
+  "gray fox": 0.000983441598
+}
+```
+
 ## Deploying the model to a Sagemaker Serverless Endpoint
 
 Use a SageMaker Notebook instance to run the `deploy_to_sagemaker.ipynb` notebook. The notebook walks through creating model on SageMaker, preparing the endpoint, deploying, and testing.

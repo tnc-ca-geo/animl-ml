@@ -9,17 +9,17 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install FastAPI and dependencies
-COPY requirements.txt /opt/ml/requirements.txt
+COPY ./serving/requirements.txt /opt/ml/requirements.txt
 RUN pip install --no-cache-dir -r /opt/ml/requirements.txt
 
 # Create directories required by SageMaker
 RUN mkdir -p /opt/ml/{model,input,output}
 
 # Copy FastAPI app
-COPY serve.py /opt/ml/code/serve.py
+COPY ./serving/serve.py /opt/ml/code/serve.py
 
 # Copy entrypoint script
-COPY dockerd-entrypoint.sh /opt/ml/code/dockerd-entrypoint.sh
+COPY ./serving/dockerd-entrypoint.sh /opt/ml/code/dockerd-entrypoint.sh
 RUN chmod +x /opt/ml/code/dockerd-entrypoint.sh
 
 # Copy model from previous stage
@@ -37,10 +37,10 @@ ENV PATH="/opt/ml/code:${PATH}"
 ENV MODEL_PATH=/opt/ml/model/${MODEL_NAME}/${MODEL_VERSION}/
 
 # Copy our model folder to the container
-COPY ./export/Servo/${MODEL_VERSION}/ ${MODEL_PATH}
+COPY ./tf-saved-model/${MODEL_VERSION}/ ${MODEL_PATH}
 
 # Copy class map to container
-COPY ./index_to_name.json /opt/ml/code/
+COPY ./exported-model/index_to_name.json /opt/ml/code/
 
 # Set working directory
 WORKDIR /opt/ml/code
