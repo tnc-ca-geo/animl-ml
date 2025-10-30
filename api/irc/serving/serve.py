@@ -39,11 +39,7 @@ async def ping():
 async def invoke(request: Request, body: InferenceRequest):
     """SageMaker invocation endpoint with extended options"""
     try:
-        logger.info(f"Content-Type: {request.headers.get('content-type')}")
-        logger.info(f"type of Request body: {type(body)}")
         input_data = body.model_dump()
-        # print input keys
-        logger.info(f"Input data keys: {list(input_data.keys())}")
 
         # Validate required fields
         if 'image' not in input_data:
@@ -54,38 +50,12 @@ async def invoke(request: Request, body: InferenceRequest):
 
         # Get bbox from request or use default [x_min, y_min, width, height]
         bbox = input_data.get('bbox', [0, 0, 1, 1])
-        logger.info(f"bbox type: {type(bbox)}")
         if isinstance(bbox, str):
             bbox = literal_eval(input_data.get("bbox"))
 
-        logger.info(f"bbox: {bbox}")
+        # preprocess image
         image = input_data.get('image')
-        logger.info(f"image type: {type(image)}")
-
-        if isinstance(image, str):
-            # if the image is a string of bytesarray.
-            logger.info("Decoding base64 image string...")
-            image = base64.b64decode(image)
-
-        # If the image is sent as bytesarray
-        if isinstance(image, (bytearray, bytes)):
-            logger.info("Opening image from bytes...")
-            image = Image.open(io.BytesIO(image))
-
-            # always save as RGB for consistency
-            if image.mode != 'RGB':
-                image = image.convert(mode='RGB')
-            
-            # crop, resize
-            image = crop(image, bbox)
-            image = image.resize((INPUT_SIZE, INPUT_SIZE))
-            logger.info(f"image size after resize: {image.size}")
-      
-        image_array = np.array(image)  # shape: (H, W, 3)
-        logger.info(f"image array shape: {image_array.shape}")
-        instances_dict = {
-            "instances": [image_array.tolist()]
-        }
+        instances_dict = preprocess_image(image, bbox)
 
         try:
             class_map = loadClassMap(CLASS_MAP_PATH)
@@ -98,11 +68,10 @@ async def invoke(request: Request, body: InferenceRequest):
             tf_response.raise_for_status()  # This will raise an HTTPError for 4xx/5xx
             pred = tf_response.json().get('predictions', [0])[0]
 
+            # sort and return top five classifications
             classifications = {}
             for i in range(len(pred)):
                 classifications[class_map[str(i)]] = float(pred[i])
-
-            # sort and return top five classifications
             top_five = dict(sorted(classifications.items(), key=lambda item: item[1], reverse=True)[:5])
             logger.info(f"top five classifications: {top_five}")
 
@@ -123,6 +92,45 @@ async def invoke(request: Request, body: InferenceRequest):
             status_code=500,
             content={"error": str(e)}
         )
+
+
+def preprocess_image(image, bbox):
+    """
+    Preprocess input image and bounding box for model inference.
+
+    Args:
+        img: base64 string or bytesarray of the image
+        bbox_rel: list or tuple of float, [ymin, xmin, ymax, xmax] all in
+            relative coordinates
+
+    Returns: cropped image array in dict format for TF Serving
+    """
+    # Decode base64 image
+    if isinstance(image, str):
+        # if the image is a string of bytesarray.
+        logger.info("Decoding base64 image string...")
+        image = base64.b64decode(image)
+
+    # If the image is sent as bytesarray
+    if isinstance(image, (bytearray, bytes)):
+        logger.info("Opening image from bytes...")
+        image = Image.open(io.BytesIO(image))
+
+        # always save as RGB for consistency
+        if image.mode != 'RGB':
+            image = image.convert(mode='RGB')
+        
+        # crop, resize
+        image = crop(image, bbox)
+        image = image.resize((INPUT_SIZE, INPUT_SIZE))
+        logger.info(f"image size after resize: {image.size}")
+
+    image_array = np.array(image)  # shape: (H, W, 3)
+    logger.info(f"image array shape: {image_array.shape}")
+    instances_dict = {
+        "instances": [image_array.tolist()]
+    }
+    return instances_dict
 
 # adapted from: 
 # https://github.com/microsoft/CameraTraps/blob/main/classification/crop_detections.py
