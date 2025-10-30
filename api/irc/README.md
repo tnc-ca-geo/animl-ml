@@ -123,4 +123,4 @@ The result should look something like:
 
 ## Deploying the model to a Sagemaker Serverless Endpoint
 
-Use a SageMaker Notebook instance to run the `deploy_to_sagemaker.ipynb` notebook. The notebook walks through creating model on SageMaker, preparing the endpoint, deploying, and testing.
+Start up a Sagemaker Notebook instance and associate this repo with it to pull in the `deploy_to_sagemaker.ipynb` and supporting files with it. Step through that notebook to (re)build and push the Docker image to ECR, create the model, endpoint config, and endpoint in Sagemaker, and finally test the endpoint.
