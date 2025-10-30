@@ -2,7 +2,6 @@
 
 import json
 import logging
-import os
 import requests
 import numpy as np
 from fastapi import FastAPI, Request
@@ -12,7 +11,8 @@ import base64
 from PIL import Image, ImageOps
 import io
 from ast import literal_eval
-from itertools import islice
+from pydantic import BaseModel
+from typing import List, Union
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -23,7 +23,12 @@ app = FastAPI()
 
 TF_SERVING_URL = "http://localhost:8501/v1/models/irc:predict"
 CLASS_MAP_PATH = '/opt/ml/code/index_to_name.json'
+CLASS_MAP = None
 INPUT_SIZE = 300 # model input size
+
+class InferenceRequest(BaseModel):
+    image: str
+    bbox: Union[List[float], str] = [0, 0, 1, 1]
 
 @app.get("/ping")
 async def ping():
@@ -31,12 +36,14 @@ async def ping():
     return JSONResponse(content={"status": "healthy"}, status_code=200)
 
 @app.post("/invocations")
-async def invoke(request: Request):
+async def invoke(request: Request, body: InferenceRequest):
     """SageMaker invocation endpoint with extended options"""
     try:
         logger.info(f"Content-Type: {request.headers.get('content-type')}")
-
-        input_data = await request.json()
+        logger.info(f"type of Request body: {type(body)}")
+        input_data = body.model_dump()
+        # print input keys
+        logger.info(f"Input data keys: {list(input_data.keys())}")
 
         # Validate required fields
         if 'image' not in input_data:
@@ -170,9 +177,11 @@ def crop(img, bbox_rel):
 
 def loadClassMap(class_map_path):
     """Load class map from JSON file"""
-    with open(class_map_path, 'r') as f:
-        class_map = json.load(f)
-    return class_map
+    global CLASS_MAP
+    if CLASS_MAP is None:
+        with open(class_map_path, 'r') as f:
+            CLASS_MAP = json.load(f)
+    return CLASS_MAP
 
 def main():
     """Run the server"""
