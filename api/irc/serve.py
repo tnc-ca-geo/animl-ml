@@ -110,14 +110,13 @@ async def invoke(request: Request):
 
         try:
             class_map = loadClassMap(CLASS_MAP_PATH)
-            logger.info(f"Class map loaded with {len(class_map)} classes.")
-            logger.info(f"Class map: {class_map}")
-
+            
             # Forward to TensorFlow Serving
             logger.info("Sending request to TensorFlow Serving...")
             tf_response = requests.post(TF_SERVING_URL, json=instances_dict)
             logger.info(f"TensorFlow Serving response status: {tf_response.status_code}")
-            print(f"TensorFlow Serving response content: {tf_response.json()}")
+            logger.info(f"TensorFlow Serving response content: {tf_response.text}")
+            tf_response.raise_for_status()  # This will raise an HTTPError for 4xx/5xx
             pred = tf_response.json().get('predictions', [0])[0]
 
             classifications = {}
@@ -133,12 +132,14 @@ async def invoke(request: Request):
 
             return JSONResponse(content=top_five, status_code=tf_response.status_code)
         except Exception as e:
+            logger.error(f"Error communicating with TensorFlow Serving: {e}")
             return JSONResponse(
                 status_code=500,
                 content={"error": f"Model error: {str(e)}"}
             )
 
     except Exception as e:
+        logger.error(f"Unexpected error: {e}")
         return JSONResponse(
             status_code=500,
             content={"error": str(e)}
