@@ -148,6 +148,9 @@ variables.*
 models/*/*
 !models/*/code
 
+# ignore tar.gz files
+*.tar.gz
+
 # ignore tmp
 tmp/
 

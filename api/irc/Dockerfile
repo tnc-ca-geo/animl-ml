@@ -9,6 +9,10 @@ RUN pip install --no-cache-dir -r /opt/ml/requirements.txt
 # Copy FastAPI app
 COPY serve.py /opt/ml/code/serve.py
 
+# Copy entrypoint script
+COPY dockerd-entrypoint.sh /opt/ml/code/dockerd-entrypoint.sh
+RUN chmod +x /opt/ml/code/dockerd-entrypoint.sh
+
 # Copy model from previous stage
 COPY --from=tfserving /models /models
 COPY --from=tfserving /usr/bin/tensorflow_model_server /usr/bin/tensorflow_model_server
@@ -35,5 +39,6 @@ WORKDIR /opt/ml/code
 # Expose FastAPI and TF Serving ports
 EXPOSE 8080 8501
 
-# Start both servers
-CMD ["bash", "-c", "uvicorn serve:app --host 0.0.0.0 --port 8080 & tensorflow_model_server --rest_api_port=8501 --model_name=irc --model_base_path=/opt/ml/models/irc"]
+# Entry point for SageMaker
+ENTRYPOINT ["/opt/ml/code/dockerd-entrypoint.sh"]
+CMD ["serve"]

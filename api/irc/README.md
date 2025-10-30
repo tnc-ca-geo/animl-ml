@@ -4,6 +4,14 @@ The IRC v2 classifier was trained by The Irvine Ranch Conservancy using the mewc
 
 The following instructions are for converting the .h5 Keras model to a Tensorflow Saved Model, building a Docker container to serve the model via Tensorflow Serving wrapped in a FastAPI application to satisfy Sagemaker, deploying the container to AWS ECR, and then deploying the container as an AWS Sagemaker Serverless Inference endpoint.
 
-## Deploying to SageMaker
+## Deploying the model to a Sagemaker Serverless Endpoint
+
+Once you have completed the steps above, you're ready to upload that model to s3 so it can be deployed to a serverless inference endpoint!
+
+Run the following to copy the model to the appropriate s3 bucket where pytorch and tensorflow models (for MIRAv1) are stored:
+
+```bash
+aws s3 cp ./model.tar.gz s3://animl-model-zoo/irc/
+```
 
 Use a SageMaker Notebook instance to run the `deploy_to_sagemaker.ipynb` notebook. The notebook walks through creating model on SageMaker, preparing the endpoint, deploying, and testing.
