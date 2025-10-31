@@ -1,0 +1,21 @@
+Model: Andes
+Version: 1
+date: 2024
+num_classes: 53
+Format: [.pt, .onnx]
+
+Author: Kyra Swanson
+Company: San Diego Zoo Wildlife Alliance
+Contact: tswanson@sdzwa.org
+
+Description: "This model distinguishes between 53 species native to the Peruvian Andes. The training data was collected by SDZWA and comprises 201,943 images. We used a 70/20/10 Train/Val/Test split. The model reached an overall accuracy, precision, and recall of 88.9%, 88.6%, and 87.3% respectively on the test set."
+	
+# Settings
+resize_width: 299
+resize_height: 299
+crop: True
+normalize: True
+# Onnx Inputs
+channel_last: True
+
+

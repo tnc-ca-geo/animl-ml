@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+requests
+pillow
+numpy
+pydantic
+typing
