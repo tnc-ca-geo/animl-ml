@@ -4,4 +4,3 @@ requests
 pillow
 numpy
 pydantic
-typing
