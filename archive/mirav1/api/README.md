@@ -1,41 +1,49 @@
-# MIRA API
+> [!IMPORTANT]  
+> This code has been archived and the MIRAv1 API is no longer in use.
+
+# MIRAv1 API
+
 API for real-time MIRA species classification
 
 ## `Intro` :fox_face:
-MIRA is a pair of species classification models trained on camera trap data from 
-the Channel Islands in California. The models were developed by 
-[Nanolayers](http://www.nanolayers.com/). The "mira-small" model is designed to 
-detect rodents, while the "mira-large" model classifies foxes and skunks.  
 
-This API allows users to submit an image file (or the URL of an image available 
-on the internet) for inference against the two MIRA models and recieve 
-predictions in the response. 
+MIRA is a pair of species classification models trained on camera trap data from
+the Channel Islands in California. The models were developed by
+[Nanolayers](http://www.nanolayers.com/). The "mira-small" model is designed to
+detect rodents, while the "mira-large" model classifies foxes and skunks.
+
+This API allows users to submit an image file (or the URL of an image available
+on the internet) for inference against the two MIRA models and recieve
+predictions in the response.
 
 ### Related repos
-- Mira                http://github.com/tnc-ca-geo/mira
-- Mira web server     https://github.com/fullmetalfelix/Mira
-- Mira worker         https://github.com/fullmetalfelix/Mira-Worker
 
+- Mira http://github.com/tnc-ca-geo/mira
+- Mira web server https://github.com/fullmetalfelix/Mira
+- Mira worker https://github.com/fullmetalfelix/Mira-Worker
 
 ## `Usage` :rat:
-Please send inference requests in a mulitpart form. You may submit images 
-either in full as binary files, or, if you'd like to run inference against an 
+
+Please send inference requests in a mulitpart form. You may submit images
+either in full as binary files, or, if you'd like to run inference against an
 image hosted somewhere online, you may submit just its URL.
 
-You can also optionally pass in an object bounding box, which the API will use 
+You can also optionally pass in an object bounding box, which the API will use
 to crop the image before sumitting it to the models for inference.
 
 The possible parts of the form are:
+
 - **image**: a binary image file
 - **url**: a url pointing to an image online
-- **bbox**: a string represntation of a bounding box in the format: 
-  '[ymin, xmin, ymax, xmax]', where values are relative and the 
+- **bbox**: a string represntation of a bounding box in the format:
+  '[ymin, xmin, ymax, xmax]', where values are relative and the
   origin in the upper-left
 
 ### Invocation example (Python)
-See example below, or check out example useage in 
-```[animl-ml/notebooks/test-inference-pipeline.ipynb](https://github.com/tnc-ca-geo/animl-ml/blob/master/notebooks/test-inference-pipeline.ipynb)``` or 
-```[animl-ml/api/mira/test/test_api.py](https://github.com/tnc-ca-geo/animl-ml/blob/master/api/mira/test/test_api.py)```. 
+
+See example below, or check out example useage in
+`[./notebooks/test-inference-pipeline.ipynb](https://github.com/tnc-ca-geo/animl-ml/blob/master/archive/mirav1-api/notebooks/test-inference-pipeline.ipynb)` or
+`[./test/test_api.py](https://github.com/tnc-ca-geo/animl-ml/blob/master/archive/mirav1-api/test/test_api.py)`.
 
 ```python
 import requests
@@ -63,53 +71,60 @@ r = requests.post(API_URL,
 Prediction responses will look like:
 
 ```json
-[{
-  "mira-large": {
-    "endpoint_name": "mira-large",
-    "classes": ["fox", "skunk", "empty"],
-    "predictions": {
-      "fox": 4.20211e-06,
-      "skunk": 0.964001,
-      "empty": 0.0359947
-    }
-  },
-  "mira-small": {
-    "endpoint_name": "mira-small",
-    "classes": ["rodent", "empty"],
-    "predictions": {
-      "rodent": 0.737944,
-      "empty": 0.262056
+[
+  {
+    "mira-large": {
+      "endpoint_name": "mira-large",
+      "classes": ["fox", "skunk", "empty"],
+      "predictions": {
+        "fox": 4.20211e-6,
+        "skunk": 0.964001,
+        "empty": 0.0359947
+      }
+    },
+    "mira-small": {
+      "endpoint_name": "mira-small",
+      "classes": ["rodent", "empty"],
+      "predictions": {
+        "rodent": 0.737944,
+        "empty": 0.262056
+      }
     }
   }
-}]
+]
 ```
 
 ## `Development` :camera:
 
 ### Prerequisits
+
 The commands below require you have the following tools globally installed:
+
 - [Serverless](https://www.serverless.com/framework/docs/getting-started/)
 - [aws-cli](https://aws.amazon.com/cli/)
 
-As well as an AWS config profile called "serverless-admin". Good instructions 
+As well as an AWS config profile called "serverless-admin". Good instructions
 [here](https://www.serverless.com/framework/docs/providers/aws/guide/credentials/).
 
 ### Deploy to dev
+
 ```shell
 $ npm run deploy-dev
 ```
 
 ### Deploy to production
+
 ```shell
 $ npm run deploy-prod
 ```
 
 ### Test
-To test the hosted dev endpoint, make sure virtual env is activated, and either 
-run the test script ```test/test_api.py``` with the ```--img [filename.jpg]``` 
-option (to test submitting an image present in the ```animl-ml/input``` 
-directory), or run it with the ```--img-url [http://some-image-url.jpg]``` 
-option to test submitting an image that's accessible somewhere on the internet 
+
+To test the hosted dev endpoint, make sure virtual env is activated, and either
+run the test script `test/test_api.py` with the `--img [filename.jpg]`
+option (to test submitting an image present in the `animl-ml/input`
+directory), or run it with the `--img-url [http://some-image-url.jpg]`
+option to test submitting an image that's accessible somewhere on the internet
 via url. You can also optionally pass in a bounding box.
 
 ```shell
@@ -139,5 +154,3 @@ $ python test/test_api.py \
   --bbox "[0.5383, 0.437, 0.63283, 0.5448999999999999]"
 
 ```
-
-

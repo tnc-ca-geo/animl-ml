@@ -144,10 +144,6 @@ variables.*
 # Torchserve model archives
 *.mar
 
-# ignore models
-models/*/*
-!models/*/code
-
 # ignore tar.gz files
 *.tar.gz
 

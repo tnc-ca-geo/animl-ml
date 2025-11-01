@@ -1,121 +1,90 @@
 # Animl ML
 
-Machine Learning resources for camera trap data processing
+This repo contains code and documentation for deploying ML models for camera trap image processing to [Animl](https://animl.camera), as well as code and documentation for training custom classifiers.
 
-> [!NOTE]
-> This needs updating
+## Model hosting and deployment
 
-## `Intro`
+### Overview
 
-We are using AWS Sagemaker to host our model endpoints. The initial models we will run inference on are [Microsoft's Megadetector](https://github.com/microsoft/CameraTraps/blob/master/megadetector.md), a model to detect animals, people, and vehicles in camera trap images, and [MIRA](https://github.com/tnc-ca-geo/mira), a pair of species classifiers trained on labeled images from Santa Cruz Island.
+Animl uses [AWS Sagemaker Serverless Inference](https://docs.aws.amazon.com/sagemaker/latest/dg/serverless-endpoints.html) endpoints for model hosting and inference. Serverless Inference endpoints are appealing for intermittent, spiky loads because they auto-scale to zero when not in use. This is particularly useful for hosting n-number of localized models, some of which are used very infrequently, which is the case for Animl.
 
-This repo contains:
+SageMaker Serverless endpoints are also CPU-based, rather than GPU, which offers cost savings but means that (a) models often need to be compiled before deployment to run on CPUs and (b) inference is slower. To compensate for the slower inference, when requests come in we scale out horizontally, spinning up many Serverless Inference endpoints at once to process the images in parallel (more specifics on how the concurrent processing is configured can be found [here](https://github.com/tnc-ca-geo/animl-api/issues/101)).
 
-- Python Notebooks to facilitate loading and deploying models as endpoints on AWS Sagemaker
-- Resources for running & debugging model endpoints locally
-- A Serverless API for submitting images & bounding boxes to the MIRA endpoints for real-time inference
-- A notebook with code examples for invoking the APIs and testing the inference pipeline end-to-end
+### Deploying a new model
 
-## `Test the inference pipeline` - TODO, update for new pipeline.
+If you're interested in deploying a model to Animl, start by gathering the following information from the model developer:
 
-The most fun place to start is the `notebooks/test-inference-pipeline.ipynb`. Fire it up and step though the notebook to test submitting images to the Megadetector API for object detection and then to MIRA API for species classification.
+1.  Model weights, class list/mappings files, and any available metadata about the model
+2.  Which deep learning library was the model trained in (e.g. PyTorch, TensorFlow), and what version?
+3.  What model architecture was used (e.g. ResNet, EfficientNet), and what version/size?
+4.  What size inputs does the model expect (e.g. 299x299)
+5.  Does the developer have training and/or inference scripts available to reference? Are there any preprocessing steps (such as image augmentations/transformations) or postprocessing steps (such as heuristic decision making) to be aware of? We may need to re-implement them in our handler functions.
 
-## `Deploy a model endpoint using AWS Sagemaker Notebook`
+The deployment process will vary depending on whether the model was trained in PyTorch or TensorFlow, but the workflow for each broadly follows the same pattern. We recommend copying existing deployment code from the `/models` directory and adapting it for your needs. More specifically:
 
-When you deploy model endpoints to Sagemaker, AWS starts an EC2 instance and starts a docker container with in it optimized for serving particular model's architecture. You can find Python Notebooks to facilitate the deployment of models in the `notebooks/` directory of this repo.
+- for **PyTorch** models, we recommend referencing [deepfaune-ne](/models/deepfaune-ne/), [sdzwa-southwestv3](/models/sdzwa-southwestv3/), or [megadetectorv5](/models/megadetectorv5/) as starting points.
+- for **TensorFlow** models, we recommend referencing [irc](/models/irc) as a starting point.
+- for **ensemble** models, we recommend referencing [speciesnet](/models/speciesnet/) as a starting point.
 
-To deploy a model endpoint, start up a Sagemaker notebook instance in AWS, associate this repo with it, and step through one of the deployment notebooks in the `notebooks/` directory to get started.
+For all models, however, the deployment workflow follows these steps:
 
-## `Local endpoint development and debugging`
+#### Step 1: Prepare model, handler functions and test container locally
 
-If you want to launch a TensorFlow serving container locally to debug and test endpoints on your computer before deploying, this repo contains a script to clone AWS's [Sagemaker TensorFlow Serving Container repo](https://github.com/aws/sagemaker-tensorflow-serving-container/) and [Microsoft's CameraTraps repo](https://github.com/microsoft/CameraTraps) and instructions below to help you run the container, load models, dependencies, and pre/postprocessing scripts into it, and submit requests to the local endpoints for inference.
+We use the "bring your own container" [approach](https://sagemaker-examples.readthedocs.io/en/latest/advanced_functionality/scikit_bring_your_own/scikit_bring_your_own.html) for all of our models deployed to SageMaker, which gives us a lot of control over model invocation and allows us to build and test our containers locally. The exact stack of the container will vary depending on training framework (for PyTorch, we start from Torchserve Docker images; for TensorFlow, we use TensorFlow Serving wrapped in a FastAPI app). You also may need to load the model into memory on your local machine and compile it to a different model format (Torchscript for PyTorch, Saved Model bundle for Tensorflow), and adjust the handler functions to meet the expectations of the new model.
 
-NOTE: be sure that you have the following installed:
+Because the implementation details vary, as mentioned above we recommend starting from existing examples in the `/models` directory, but broadly speaking you'll likely have to perform the following steps:
 
-- [aws-vault](https://github.com/99designs/aws-vault)
-- [docker](https://docs.docker.com/docker-for-mac/install/)
-- [virtualenv](https://virtualenv.pypa.io/en/latest/)
+1. convert or compile the model in some way to make it suitable for serving
+2. adjust pre/post processing handler functions as needed
+3. build and test your container locally
+4. upload the compiled model for use in the next step
 
-### 1. Clone the repo and set up the virtual env
+#### Step 2: Deploy model to Sagemaker Serverless Inference endpoint using Sagemaker Notebook
 
-```
-$ mkdir animl-ml
-$ git clone https://github.com/tnc-ca-geo/animl-ml.git
-$ virtualenv env -p python3
-$ source env/bin/activate
-$ cd animl-ml
-$ pip3 install -r requirements.txt
-```
+Each model in the `/models` directory has a `deploy_to_sagemaker.ipynb`, which are intended to be run in hosted Sagemaker Notebooks. To deploy your model:
 
-### 2. Get the CameraTrap and Sagemaker container repos
+1. copy a deployment notebook from an existing endpoint
+2. create a Sagemaker Notebook instance and associate it with https://github.com/tnc-ca-geo/animl-ml repo
+3. step through the deployment notebook, adjusting as needed, and test deployed endpoint(s)
+4. DON’T FORGET TO DEACTIVATE NOTEBOOK WHEN FINISHED!
 
-After cloning this repo, from the `animl-ml/animl-ml/` project directory, run the script to clone the necessary external repos:
+#### Step 3: Add SSM params
 
-```
-$ bash ./scripts/get-libs.sh
-```
+The [animl-api](https://github.com/tnc-ca-geo/animl-api) uses SSM parameters to map the deployed model endpoint names to config variables referenced at runtime. You will need to create 2 new parameters (one for `dev` and one for `prod`) for each of the endpoints you deployed. So if you deployed one endpoint for batch inference and one for real-time inference, you'll need to create a total of 4 new parameters following the naming convention below:
 
-### 3. Get the MIRA models
+| Parameter Name                            | Parameter Value                                   |
+| ----------------------------------------- | ------------------------------------------------- |
+| `/ml/<model_name>-batch-endpoint-dev`     | `<model_name>-concurrency-<batch_concurrency>`    |
+| `/ml/<model_name>-batch-endpoint-prod`    | `<model_name>-concurrency-<batch_concurrency>`    |
+| `/ml/<model_name>-realtime-endpoint-dev`  | `<model_name>-concurrency-<realtime_concurrency>` |
+| `/ml/<model_name>-realtime-endpoint-prod` | `<model_name>-concurrency-<realtime_concurrency>` |
 
-The MIRA models we use in this app are available in Tensorflow ProtoBuf format at s3://animl-model-zoo. To download and unzip them, run the following from the same `animl-ml` project directory:
+#### Step 4: In animl-api, fetch new SSM params and implement model interface
 
-```
-$ aws-vault exec <vault_profile> -- bash ./scripts/get-models.sh
-```
+See [this PR](https://github.com/tnc-ca-geo/animl-api/pull/368/files) as an example.
 
-NOTE: If you're on a mac, make sure there aren't any stray `.DS_store` files in `animl-ml/models/`. The sagemaker-tensorflow-serving-container build scripts will mistake them for models and try to load them into the container. A quick way to recursively remove all `.DS_store` files is to cd to the `animl-ml/models/` directory and run:
+#### Step 5: Add `MLModel` record to MongoDB
 
-```
-$ find . -name '*.DS_Store' -type f -delete
-```
+You'll need to create an `MLModel` record with an array of `categories` for each class your model predicts. For models with a small number of classes it's easy to clone and amend an existing record in the DB, for models with a large number of classes we recommend scripting the category creation (see SpeciesNet example of that here [here](/models/speciesnet/transform_taxonomy.py)).
 
-### 4. Building the container
+> [!NOTE]  
+> Don’t forget to scrub periods (`.`) and dollar signs (`$`) from [MLModel.categories.name](http://MLModel.categories.name) fields when creating your `MLModel` records. More info on why we need to do so can be found [here](https://github.com/tnc-ca-geo/animl-api/issues/314).
 
-And finally, to build the docker container in which the model will be run locally, execute:
+Lastly, to make the model available to Animl Projects for use in their [Automation Rules](https://docs.animl.camera/fundamentals/automation-rules), you'll need to add the new `MLModel._id` to each Projects' `Project.availableMLModels`.
 
-```
-$ aws-vault exec <vault_profile> -- bash ./scripts/build-container.sh
-```
+### Other things to note
 
-### 5. Running the container
+- **Real-time vs. batch endpoints:** Animl can ingest camera trap images in two ways: integrated wireless/cellular cameras can send their images to Animl for processing in real-time, or users can bulk upload a zip file of images directly from their local computers. In order to prevent large bulk/batch uploads from blocking real-time inference requests, for many of the models we host we maintain separate endpoints for each ingestion pathway: one for processing large batch uploads and one for processing smaller numbers of wireless images in real-time. For more information on how the two sets of endpoints are integrated in the larger application, high-level documentation and a diagram of the Animl architecture can be found [here](https://github.com/tnc-ca-geo/animl-api/tree/main/documentation). For the purposes of this repo, it's worth being aware that when we need to support real-time inference for a model, we deploy them as separate endpoints with different concurrency settings. More on that below.
+- **AWS concurrency limit:** As mentioned above we compensate for Serverless Endpoint latency (both from cold-starts and slower inference on CPUs) by scaling horizontally and making maximal use of our AWS account's endpoint concurrency allotment (1000 per region). As of November 2025 we’re already using 940 out of our 1000 allotted concurrencies in the US-West-2 region. If we want to host more, my understanding is that our options are:
+  a. dial down the concurrency settings of our current models to make room for more endpoints in the region
+  b. standing up Animl on multiple AWS accounts. E.g. maintain one for TNC users, one for external partners, an separate ones for enterprise users.
+  c. ask AWS to increase our quota
+- **Animl prod & dev stacks use the same endpoints:** The only reason for this is to conserve our concurrency quota.
+- **A note about cost and scalability:** Initially Animl used models deployed on Sagemaker Realtime Endpoints, which were expensive because we were paying for an on-demand GPU instance even when not in use. Switching to Serverless Endpoints reduced our inference costs by roughly 10x at the time. However, because Serverless Inference endpoints are pay-per-use, at some point (I suppose at >10x our current usage), the fixed-priced, dedicated endpoints we had been using previously will begin to be the more cost-effective option. Another likley cheaper approach would be to hold the inference requests in a queue and spin up/tear down processing resources on a schedule.
 
-To run the container, run the `start-container.sh` script
+## Classifier training
 
-```
-$ aws-vault exec <vault_profile> -- bash ./scripts/start-container.sh
-```
-
-Check that it was successful and the container is running with:
-
-```
-$ docker ps
-```
-
-Alternatively, you can also start the container in interactive mode with:
-
-```
-$ aws-vault exec <vault_profile> -- bash ./scripts/start-container-interactive.sh
-```
-
-To stop the container, run:
-
-```
-$ aws-vault exec <vault_profile> -- bash ./scripts/stop-container.sh
-```
-
-All output from the container will be piped into `log.txt`.
-
-### 6. Run inference on the local endpoint
-
-To test the endpoint, pass the `make-request.py` script a path to an local image file:
-
-```
-$ aws-vault exec <vault_profile> -- python ./scripts/make-request.py input/sample-img.jpg
-```
-
-### Megadetector V5a endpoint
-
-See [api/megadetectorv5/README.md] for instructions on setting up a local endpoint and deploying a serverless endpoint of the new Megadetector v5 model. Instructions above are based on the old Megadetector v4 model written in Tensorflow and need to be updated.
+Instructions for training custom classifiers can be found in the [/classifier-training](/classifier-training/) directory.
 
 ## Related repos
 
