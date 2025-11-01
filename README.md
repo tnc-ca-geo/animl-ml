@@ -6,7 +6,7 @@ This repo contains code and documentation for deploying ML models for camera tra
 
 ### Overview
 
-Animl uses [AWS Sagemaker Serverless Inference](https://docs.aws.amazon.com/sagemaker/latest/dg/serverless-endpoints.html) endpoints for model hosting and inference. Serverless Inference endpoints are appealing for intermittent, spiky loads because they auto-scale to zero when not in use, so we only pay for them when users are making inference requests. This is particularly useful for hosting n-number of localized models, some of which are used very infrequently, which is the case for Animl.
+Animl uses [AWS Sagemaker Serverless Inference](https://docs.aws.amazon.com/sagemaker/latest/dg/serverless-endpoints.html) endpoints for model hosting and inference. Serverless Inference endpoints are appealing for intermittent, spiky loads because they auto-scale to zero when not in use. This is particularly useful for hosting n-number of localized models, some of which are used very infrequently, which is the case for Animl.
 
 SageMaker Serverless endpoints are also CPU-based, rather than GPU, which offers cost savings but means that (a) models often need to be compiled before deployment to run on CPUs and (b) inference is slower. To compensate for the slower inference, when requests come in we scale out horizontally, spinning up many Serverless Inference endpoints at once to process the images in parallel (more specifics on how the concurrent processing is configured can be found [here](https://github.com/tnc-ca-geo/animl-api/issues/101)).
 
@@ -26,16 +26,16 @@ The deployment process will vary depending on whether the model was trained in P
 - for **TensorFlow** models, we recommend referencing [irc](/models/irc) as a starting point.
 - for **ensemble** models, we recommend referencing [speciesnet](/models/speciesnet/) as a starting point.
 
-For all models, the deployment workflow follows these steps:
+For all models, however, the deployment workflow follows these steps:
 
 #### Step 1: Prepare model, handler functions and test container locally
 
 We use the "bring your own container" [approach](https://sagemaker-examples.readthedocs.io/en/latest/advanced_functionality/scikit_bring_your_own/scikit_bring_your_own.html) for all of our models deployed to SageMaker, which gives us a lot of control over model invocation and allows us to build and test our containers locally. The exact stack of the container will vary depending on training framework (for PyTorch, we start from Torchserve Docker images; for TensorFlow, we use TensorFlow Serving wrapped in a FastAPI app). You also may need to load the model into memory on your local machine and compile it to a different model format (Torchscript for PyTorch, Saved Model bundle for Tensorflow), and adjust the handler functions to meet the expectations of the new model.
 
-We recommend starting from existing examples in the `/models` directory. Broadly speaking you'll likely have to perform the following steps:
+Because the implementation details vary, as mentioned above we recommend starting from existing examples in the `/models` directory, but broadly speaking you'll likely have to perform the following steps:
 
-1. convert or compile the model in some way
-2. adjust your handler functions
+1. convert or compile the model in some way to make it suitable for serving
+2. adjust pre/post processing handler functions as needed
 3. build and test your container locally
 4. upload the compiled model for use in the next step
 
@@ -50,7 +50,7 @@ Each model in the `/models` directory has a `deploy_to_sagemaker.ipynb`, which a
 
 #### Step 3: Add SSM params
 
-The [animl-api](https://github.com/tnc-ca-geo/animl-api) uses SSM parameters to map the deployed model endpoint names to config variables. You will need to create 2 new parameters (one for `dev` and one for `prod`) for each of the endpoints you deployed. So if you deployed one endpoint for batch inference and one for real-time inference, you'll need to create 4 new parameters total following the naming convention below:
+The [animl-api](https://github.com/tnc-ca-geo/animl-api) uses SSM parameters to map the deployed model endpoint names to config variables referenced at runtime. You will need to create 2 new parameters (one for `dev` and one for `prod`) for each of the endpoints you deployed. So if you deployed one endpoint for batch inference and one for real-time inference, you'll need to create a total of 4 new parameters following the naming convention below:
 
 | Parameter Name                            | Parameter Value                                   |
 | ----------------------------------------- | ------------------------------------------------- |
@@ -65,10 +65,10 @@ See [this PR](https://github.com/tnc-ca-geo/animl-api/pull/368/files) as an exam
 
 #### Step 5: Add `MLModel` record to MongoDB
 
-You'll need to create an `MLModel` record with an array of `categories` for each class your model predicts. We recommend copying and amending an existing record or scripting the category creation (see SpeciesNet example of that here [here](/models/speciesnet/transform_taxonomy.py)).
+You'll need to create an `MLModel` record with an array of `categories` for each class your model predicts. For models with a small number of classes it's easy to clone and amend an existing record in the DB, for models with a large number of classes we recommend scripting the category creation (see SpeciesNet example of that here [here](/models/speciesnet/transform_taxonomy.py)).
 
 > [!NOTE]  
-> Don’t forget to scrub periods (`.`) and dollar signs (`$`) from [MLModel.categories.name](http://MLModel.categories.name) fields when creating your `MLModel` records. More info on why can be found [here](https://github.com/tnc-ca-geo/animl-api/issues/314).
+> Don’t forget to scrub periods (`.`) and dollar signs (`$`) from [MLModel.categories.name](http://MLModel.categories.name) fields when creating your `MLModel` records. More info on why we need to do so can be found [here](https://github.com/tnc-ca-geo/animl-api/issues/314).
 
 Lastly, to make the model available to Animl Projects for use in their [Automation Rules](https://docs.animl.camera/fundamentals/automation-rules), you'll need to add the new `MLModel._id` to each Projects' `Project.availableMLModels`.
 
