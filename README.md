@@ -19,6 +19,7 @@ If you're interested in deploying a model to Animl, start by gathering the follo
 3.  What model architecture was used (e.g. ResNet, EfficientNet), and what version/size?
 4.  What size inputs does the model expect (e.g. 299x299)
 5.  Does the developer have training and/or inference scripts available to reference? Are there any preprocessing steps (such as image augmentations/transformations) or postprocessing steps (such as heuristic decision making) to be aware of? We may need to re-implement them in our handler functions.
+6.  Does the developer have a recommended default confidence threshold?
 
 The deployment process will vary depending on whether the model was trained in PyTorch or TensorFlow, but the workflow for each broadly follows the same pattern. We recommend copying existing deployment code from the `/models` directory and adapting it for your needs. More specifically:
 
