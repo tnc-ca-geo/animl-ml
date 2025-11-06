@@ -1,0 +1,11 @@
+torch
+pandas
+pytorch-lightning
+Pillow
+torchvision
+tqdm
+timm
+transformers
+scikit-learn
+clipboard
+megadetector-utils

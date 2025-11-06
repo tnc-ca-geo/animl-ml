@@ -31,7 +31,33 @@ The following instructions are for deploying Torch model to a Sagemaker Serverle
 From this directory, run:
 
 ```bash
-aws s3 sync s3://animl-model-zoo/camera-trap-vehicle-classifier/ original-model
+aws s3 sync s3://animl-model-zoo/camera-trap-vehicle-classifier/ .
 unzip original-model/camera-trap-vehicle-classifier.2025.07.09.zip -d original-model/
 rm original-model/camera-trap-vehicle-classifier.2025.07.09.zip
+```
+
+You should have a directory structure that looks like:
+
+```
+...
+/irc
+    |-- exported-model
+        |-- index_to_name.json
+        |-- // TODO: UPDATE WITH EXPORTED FILE NAME
+    |-- original-model
+        |-- classes.txt
+        |-- camera-trap-vehicle-classifier.2025.07.09.ckpt
+    ...
+```
+
+> **NOTE:** if there's also a <TODO: UPDATE WITH FILE NAME> file present, that's the older/current Torchscript Model Archive, and unless you want to re-compile this model for CPU and create a new `.mar` file(perhaps because the weights or the inference code changed), you can skip to <TODO: UPDATE WITH STEP>
+
+## Load the weights into PyTorch locally and re-compile to torchserve for CPU
+
+Create and activate a Conda environment and install dependencies by running the following form this directory:
+
+```bash
+conda create -n camera-trap-vehicle-classifier python=3.11 pip -y
+conda activate camera-trap-vehicle-classifier
+pip install -r requirements.txt
 ```
