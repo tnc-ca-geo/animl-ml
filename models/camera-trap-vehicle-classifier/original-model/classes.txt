@@ -1,0 +1,4 @@
+car_or_truck
+motorbike
+mountain_biker
+quad
