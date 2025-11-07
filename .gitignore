@@ -131,6 +131,7 @@ dmypy.json
 # TF and PyTorch model files
 *.pb
 *.pt
+*.pt2
 *.pth
 *.h5
 *.ckpt
