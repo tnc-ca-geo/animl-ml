@@ -9,6 +9,8 @@ It's a PyTorch model, fine-tuned from the [timm/eva02_large_patch14_448.mim_m38m
 - mountain bike
 - quad
 
+It expects an input of `(448, 448)`.
+
 The following instructions are for deploying Torch model to a Sagemaker Serverless Endpoint served in a Torchserve container. In order to create and deploy the model archive from scratch, we need to work across two different environments:
 
 1. your local environment, where you will:
@@ -60,4 +62,43 @@ Create and activate a Conda environment and install dependencies by running the 
 conda create -n camera-trap-vehicle-classifier python=3.11 pip -y
 conda activate camera-trap-vehicle-classifier
 pip install -r requirements.txt
+```
+
+Then step through `camera-trap-vehicle-classifier_compile.ipynb`. The notebook should produce a torchscript model 'camera-trap-vehicle-classifier_compiled_cpu.pt2' in the `./exported-model/` directory.
+
+Note for others using these steps to deploy a different model: the versions of `torch` and `torchvision` that you pin in your `Dockerfile` used for serving must match the versions you use when compiling the model to torchscript. To check which versions you're using in your venv use `pip freeze` and to bump the versions up (or down) use `pip install --upgrade` (e.g. `pip install --upgrade torchvision==0.15.1`).
+
+## Install and run `torch-model-archiver` to generate .mar file
+
+Full documentation for creating a torchserve model archive (.mar) file can be found [here](https://github.com/pytorch/serve/tree/master/model-archiver#creating-a-model-archive).
+
+> **NOTE:** because we want to crop images to their respective bounding boxes and resize them to match the resizing and transformations that were performed during training, we created a [custom handler](https://github.com/pytorch/serve/blob/master/docs/custom_service.md#custom-handlers). However, if you are trying to follow these steps to deploy a different image classifier and don't need to do any pre-processing, passing in one of the [default handlers](https://github.com/pytorch/serve/blob/master/docs/default_handlers.md) (i.e. ` --handler image_classifier`) to the `torch-model-archiver` works fine as an alternative.
+
+Run:
+
+```bash
+pip install torch-model-archiver
+```
+
+to install dependencies, then the following to create the archive:
+
+```bash
+torch-model-archiver --model-name camera-trap-vehicle-classifier --version 1.0.0 --serialized-file exported-model/camera-trap-vehicle-classifier_compiled_cpu.pt2 --extra-files exported-model/index_to_name.json --handler camera-trap-vehicle-classifier_handler.py
+mv camera-trap-vehicle-classifier.mar exported-model/camera-trap-vehicle-classifier.mar
+```
+
+## Locally build, serve, and test the torchscript model with torchserve
+
+We can now locally test this model prior to deploying.
+
+Build the Docker image (you only have to do this once or if you've modified the Dockerfile):
+
+```bash
+docker build -t camera-trap-vehicle-classifier:latest-cpu .
+```
+
+Run it:
+
+```bash
+bash docker-run.sh $(pwd)/exported-model
 ```
