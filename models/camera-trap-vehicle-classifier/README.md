@@ -88,6 +88,12 @@ torch-model-archiver --model-name camera-trap-vehicle-classifier --version 1.0.0
 mv camera-trap-vehicle-classifier.mar exported-model/camera-trap-vehicle-classifier.mar
 ```
 
+Finally, upload the exported files to S3 so that they are accessible for deployment and future use:
+
+```bash
+aws s3 cp --recursive ./exported-model s3://animl-model-zoo/camera-trap-vehicle-classifier/exported-model
+```
+
 ## Locally build, serve, and test the Torchscript model with Torchserve
 
 We can now locally test this model prior to deploying.
@@ -135,3 +141,7 @@ The result should look something like:
   "quad": 9.004459684547328e-7
 }
 ```
+
+## Deploying the model to a Sagemaker Serverless Endpoint
+
+Start up a Sagemaker Notebook instance and associate this repo with it to pull in the `camera-trap-vehicle-classifier_deploy.ipynb` and supporting files with it. Step through that notebook to (re)build and push the Docker image to ECR, create the model, endpoint config, and endpoint in Sagemaker, and finally test the endpoint.
