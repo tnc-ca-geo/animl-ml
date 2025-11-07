@@ -10,8 +10,9 @@ import io
 from PIL import Image, ImageOps
 from ast import literal_eval
 
-# mean/std values from 
-# https://github.com/microsoft/CameraTraps/blob/main/classification/train_classifier.py
+# mean/std values from running
+# get_transforms_from_checkpoint() in run_vehicle_classifier.py
+# https://github.com/agentmorris/camera-trap-vehicle-classifier/blob/main/run_vehicle_classifier.py
 MEANS = np.asarray([0.48145466, 0.4578275, 0.40821073])
 STDS = np.asarray([0.26862954, 0.26130258, 0.27577711])
 
@@ -19,7 +20,13 @@ STDS = np.asarray([0.26862954, 0.26130258, 0.27577711])
 IMG_SIZE = 448
 
 class CustomImageClassifier(ImageClassifier):
-    
+
+    def initialize(self, context):
+        super().initialize(context)
+        # Set topk to the number of classes or less
+        # NOTE: this is necessary for serving classifiers that have < 5 classes
+        self.topk = min(4, getattr(self, "topk", 5))
+
     # define the transforms
     image_processing = transforms.Compose([
         transforms.Resize((IMG_SIZE, IMG_SIZE)),
@@ -33,8 +40,7 @@ class CustomImageClassifier(ImageClassifier):
         :param data: raw data to be transformed
         :return: preprocessed data for model input
         """
-        # custom pre-procsess code goes here
-        print(f"data: {data}")
+        # custom pre-process code goes here
         """The preprocess function of MNIST program converts the input data to a float tensor
         Args:
             data (List): Input data from the request is in the form of a Tensor

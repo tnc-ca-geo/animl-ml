@@ -2,7 +2,7 @@
 
 The Camera Trap Vehicle Classifier was trained by Dan Morris and its full repository be found [here](https://github.com/agentmorris/camera-trap-vehicle-classifier).
 
-It's a PyTorch model, fine-tuned from the [timm/eva02_large_patch14_448.mim_m38m_ft_in22k_in1k](https://huggingface.co/timm/eva02_large_patch14_448.mim_m38m_ft_in22k_in1k) base model, that classifies vehicles cropped from camera trap images into the following categories:
+It's a PyTorch model, fine-tuned from the [timm/eva02_large_patch14_448.mim_m38m_ft_in22k_in1k](https://huggingface.co/timm/eva02_large_patch14_448.mim_m38m_ft_in22k_in1k) (EVA-02) base model, that classifies vehicles cropped from camera trap images into the following categories:
 
 - car/truck
 - motorbike
@@ -11,7 +11,7 @@ It's a PyTorch model, fine-tuned from the [timm/eva02_large_patch14_448.mim_m38m
 
 It expects an input of `(448, 448)`.
 
-The following instructions are for deploying Torch model to a Sagemaker Serverless Endpoint served in a Torchserve container. In order to create and deploy the model archive from scratch, we need to work across two different environments:
+The following instructions are for deploying this PyTorch model to a Sagemaker Serverless Endpoint served in a Torchserve container. In order to create and deploy the model archive from scratch, we need to work across two different environments:
 
 1. your local environment, where you will:
 
@@ -44,17 +44,18 @@ You should have a directory structure that looks like:
 ...
 /irc
     |-- exported-model
+        |-- camera-trap-vehicle-classifier_compiled_cpu.pt
+        |-- camera-trap-vehicle-classifier.mar
         |-- index_to_name.json
-        |-- // TODO: UPDATE WITH EXPORTED FILE NAME
     |-- original-model
         |-- classes.txt
         |-- camera-trap-vehicle-classifier.2025.07.09.ckpt
     ...
 ```
 
-> **NOTE:** if there's also a <TODO: UPDATE WITH FILE NAME> file present, that's the older/current Torchscript Model Archive, and unless you want to re-compile this model for CPU and create a new `.mar` file(perhaps because the weights or the inference code changed), you can skip to <TODO: UPDATE WITH STEP>
+> **NOTE:** if there's a `.mar` file present in the `/exported-model` directory, that's the older/current Torchscript Model Archive, and unless you want to re-compile this model for CPU and create a new `.mar` file (perhaps because the weights or the inference code changed), you can skip to the [Locally build/test step](#locally-build-serve-and-test-the-torchscript-model-with-torchserve).
 
-## Load the weights into PyTorch locally and re-compile to torchserve for CPU
+## Load the weights into PyTorch locally and re-compile to Torchserve for CPU
 
 Create and activate a Conda environment and install dependencies by running the following form this directory:
 
@@ -64,7 +65,7 @@ conda activate camera-trap-vehicle-classifier
 pip install -r requirements.txt
 ```
 
-Then step through `camera-trap-vehicle-classifier_compile.ipynb`. The notebook should produce a torchscript model 'camera-trap-vehicle-classifier_compiled_cpu.pt2' in the `./exported-model/` directory.
+Then step through `camera-trap-vehicle-classifier_compile.ipynb`. The notebook should produce a torchscript model 'camera-trap-vehicle-classifier_compiled_cpu.pt' in the `./exported-model/` directory.
 
 Note for others using these steps to deploy a different model: the versions of `torch` and `torchvision` that you pin in your `Dockerfile` used for serving must match the versions you use when compiling the model to torchscript. To check which versions you're using in your venv use `pip freeze` and to bump the versions up (or down) use `pip install --upgrade` (e.g. `pip install --upgrade torchvision==0.15.1`).
 
@@ -83,11 +84,11 @@ pip install torch-model-archiver
 to install dependencies, then the following to create the archive:
 
 ```bash
-torch-model-archiver --model-name camera-trap-vehicle-classifier --version 1.0.0 --serialized-file exported-model/camera-trap-vehicle-classifier_compiled_cpu.pt2 --extra-files exported-model/index_to_name.json --handler camera-trap-vehicle-classifier_handler.py
+torch-model-archiver --model-name camera-trap-vehicle-classifier --version 1.0.0 --serialized-file exported-model/camera-trap-vehicle-classifier_compiled_cpu.pt --extra-files exported-model/index_to_name.json --handler camera-trap-vehicle-classifier_handler.py
 mv camera-trap-vehicle-classifier.mar exported-model/camera-trap-vehicle-classifier.mar
 ```
 
-## Locally build, serve, and test the torchscript model with torchserve
+## Locally build, serve, and test the Torchscript model with Torchserve
 
 We can now locally test this model prior to deploying.
 
@@ -101,4 +102,36 @@ Run it:
 
 ```bash
 bash docker-run.sh $(pwd)/exported-model
+```
+
+Test it:
+
+```bash
+# compose the JSON payload with jq (https://stedolan.github.io/jq/download/)
+# and send that payload to our torchserve endpoint via cURL.
+# To test other images locally, modify the variables for the image path
+# and bounding box accordingly. BBOXes are [ymin, xmin, ymax, xmax], normalized (not absolute)
+
+# build payload (mountain biker test)
+IMG_STRING=$(base64 -i ./tests/test-data/mountain-biker-test.jpg) \
+BBOX=[0.19789853692054749,0,0.9022471904754639,0.5614370703697205] \
+PAYLOAD=$( jq -n \
+            --arg image "$IMG_STRING" \
+            --arg bbox "$BBOX" \
+            '{image: $image, bbox: $bbox}' )
+
+
+# invoke endpoint with payload:
+curl -i http://127.0.0.1:8080/invocations -F body=$PAYLOAD
+```
+
+The result should look something like:
+
+```json
+{
+  "mountain_biker": 0.9999924898147583,
+  "motorbike": 5.223560037848074e-6,
+  "car_or_truck": 1.3966878213977907e-6,
+  "quad": 9.004459684547328e-7
+}
 ```
