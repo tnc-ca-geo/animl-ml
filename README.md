@@ -24,6 +24,7 @@ If you're interested in deploying a model to Animl, start by gathering the follo
 The deployment process will vary depending on whether the model was trained in PyTorch or TensorFlow, but the workflow for each broadly follows the same pattern. We recommend copying existing deployment code from the `/models` directory and adapting it for your needs. More specifically:
 
 - for **PyTorch** models, we recommend referencing [deepfaune-ne](/models/deepfaune-ne/), [sdzwa-southwestv3](/models/sdzwa-southwestv3/), or [megadetectorv5](/models/megadetectorv5/) as starting points.
+- for **PyTorch Lightning** models, we recommend referencing [camera-trap-vehicle-classifer](/models/camera-trap-vehicle-classifier/) as a starting point.
 - for **TensorFlow** models, we recommend referencing [irc](/models/irc) as a starting point.
 - for **ensemble** models, we recommend referencing [speciesnet](/models/speciesnet/) as a starting point.
 
