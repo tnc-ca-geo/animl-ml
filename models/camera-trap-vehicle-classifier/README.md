@@ -42,7 +42,7 @@ You should have a directory structure that looks like:
 
 ```
 ...
-/irc
+/camera-trap-vehicle-classifier
     |-- exported-model
         |-- camera-trap-vehicle-classifier_compiled_cpu.pt
         |-- camera-trap-vehicle-classifier.mar

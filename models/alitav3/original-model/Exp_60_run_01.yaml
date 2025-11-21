@@ -1,0 +1,131 @@
+#File usage: Strings get evaluated as Python code, numerical values are asigned numerical datatypes
+
+#Parameters to change or check for every training run
+EXPERIMENT_NAME: 'Exp_60'  #Suggest new experiment for every new dataset to be created
+RUN_ID: 'run_01'
+DESCRIPTION: 'Repeat exp_59, but increased patience, reduced hash threshold'
+EXTRA_CORES: 3 #'None'= max cpu count used. 0 Means original processor only. Currently fastest with 1. CPU memory overflow with 5
+
+
+#Settings that are only needing when making a new experiment (pre-cropped dataset)
+TEMP_DATA_SSD: 'C:\\' #'/media/olly/Red_SSD/Alita/Data/Temp_Images'  #'E:\\'  
+SOURCE_IMAGES_PTH: 'Z:\\alternative_footage\\CLEANED'  #'/media/olly/Red_SSD/Alita/Data/Practice_Dataset_Small'
+#SOURCE_IMAGES_PTH: '/media/olly/Red_SSD/Alita/Data/Practice_Dataset_Small'
+
+#Data Parameters
+REDUCE_DATA: 'None'   # 'None'  #40  Reduces the input dataframe size by this factor for debugging
+CLASSES_FROM_DIR_NMS: 'True'
+CLASSES: "['mouse','robin','possum','stoat','cat','rat','thrush','kea','blackbird','wallaby','tomtit','cow',
+          'sheep','human','rifleman','kiwi','rabbit','deer','weka','parakeet','ferret','hare','pukeko','harrier',
+          'bellbird','hedgehog','chaffinch','dunnock','sealion','weasel','pipit','yellow_eyed_penguin','magpie',
+          'myna','quail','greenfinch','yellowhammer','pig','kereru','tui','starling','sparrow','silvereye','fantail',
+          'dog','moth','goat','pateke','banded_rail','oystercatcher','black_fronted_tern','paradise_duck','mallard',
+          'morepork','goldfinch','chamois','redpoll','takahe','kaka','shore_plover','canada_goose','spurwing_plover',
+          'tieke','white_faced_heron','lizard','shag','black_backed_gull','little_blue_penguin','brown_creeper',
+          'black_billed_gull','crake','skylark','pheasant','skink','grey_warbler','swan','fernbird','banded_dotterel',
+          'rosella','fiordland_crested_penguin','pied_stilt','mohua','long_tailed_cuckoo','kingfisher','nz_falcon',
+          'grey_duck','spotted_dove','swallow','penguin', 'song thrush', 'brown_creeper', 'kakariki', 
+          'mice', 'tahr','waxeye', 'whio', 'kakapo']"
+CLASSES_TO_EXCLUDE: "['shag', 'bat', 'moth', 'skink', 'lizard',  'skylark', 'grey_duck', 'empty', 'campbell_island_teal']"  #'fernbird', 'long_tailed_cuckoo', 'brown_creeper',
+CLASSES_TO_IGNORE: "[]" #still train with images and detect, but assign to 'unknown' eg [penguin], A penguin and kea walk into a bar, the detector only pays attention to the kea, since the penguin is 'unknown'
+CLASS_JOINS:  "{'lizard':['skink', 'lizard'], 
+                'finch':['greenfinch', 'goldfinch', 'chaffinch'], 
+                'quail':['quail_california', 'quail_brown'], 
+                'deer':['deer', 'white_tailed_deer'],
+                'harrier':['harrier', 'harier']
+                }"   #{'rodent':['rat','mouse'], 'mustelid':['ferret', 'stoat', 'weasel'], ..}
+MIN_SAMPLES: 10  #Any class with less than this will not be used.
+CLASS_NAME_CHANGE: " {'penguin':'little_blue_penguin', 'song thrush':'thrush', 'NZ_falcon':'nz_falcon'}" # Folders labelled the first thing are labeled the second thing
+LOCATIONS_TO_EXCLUDE: "[]" #do nothing with these folders
+INDEPENDENT_TEST_ONLY: "['N01', 'BWS', 'EBF', 'EM1', 'ES1'] + ['EL1', 'ES1', 'N02', 'N04', 'N06', 'N08', 'OTR', 'WRO']"
+BEST_ONLY: 'True' #Use only the best MD crop from each original image file
+RELOAD_INDEPENDENT: 'False'
+RERUN_MD_ON_ALL: 'False'
+RECLASSIFY_MD_EMPTIES: 'True'
+RUN_MD_NEW_FILES_ONLY: 'True'
+RELOAD_NEW_TRAIN_IMAGES: 'True'   #Set to False in the rare case where the new images are already in the temp folder
+RUN_PREPROCESS: 'True'
+REMOVE_BACKGROUND: 'False'
+BUFFER: 0
+MD_THRESHOLD_TO_TRAIN_WITH: 0.5
+LOW_CONF: "[]" #Classes that will be included regardless of MD detection confidence
+TEST_FRACTION: 0.1
+VAL_FRACTION: 0.1
+#FILTER_METHOD: 'random'
+UPDATE_META_DATA: 'True'
+UPDATE_EXIF: 'False'
+
+
+#Image Processing Parameters
+MD_RESAMPLE: 'True'
+BACKGROUND_MARGIN: 0.2
+EDGE_FADE: 'False'
+MIN_FADE_MARGIN: 0.05
+MAX_FADE_MARGIN: 0.2
+CROP_SIZE: 600 #Size of the stored training image crops.
+IMAGE_SIZE: 480 #Final crop width and height for inference, must be less than CROP_SIZE.
+
+
+#Model Training parameters
+MODEL_NAME:  'tf_efficientnetv2_s.in21k' #'efficientnet_b0.ra_in1k'  #'tf_efficientnetv2_l.in21k_ft_in1k'  # 'efficientnet_b3.ra2_in1k' # 'efficientnet_b5.sw_in12k_ft_in1k'
+HEAD_NAME:  'ClassifierHead'  #'ClassifierHead' # Alternative:
+WEIGHTED_SAMPLING: 'False'
+FOCAL_GAMMA: 1
+FOCAL_ALPHA: 0.3
+FOCAL_ALPHA_OFFSET: 0.1
+FOCAL_WEIGHTS_OFFSET: 1000000
+USE_MIXUP: 'False'
+MIXUP_ALPHA: 0.5
+RANDOM_SEED: 2023
+MAX_EPOCHS: 25
+EPOCHS_BACKBONE_FROZEN: 1
+UNFREEZE_LAYERS: 6
+LOSS_FUNCTION:  'BinaryFocalLoss' #'WeightedBinaryFocalLoss' # 'FocalLoss'  'CrossEntropyLoss'  'BinaryFocalLoss'
+PATIENCE: 4
+BATCH_SIZE: 8
+TRAIN_BATCH_SIZE: 32
+LEARNING_RATE: '1e-3'
+INITIAL_LR: '1e-4'
+WARMUP_EPOCHS: 2
+LR_CYCLE_LENGTH: 16
+MIN_LR: '1e-5'
+LR_DECAY: 0.01
+WEIGHT_DECAY: '1e-5'
+
+#New parameters for new prioritising methods.  Image hashing, max diversity from embeddings
+MIN_HASH_DIFFERENCE: 55 #60  #Scored better than 50
+MAX_PER_CLASS_PER_CAMERA: 160
+MAX_PER_CLASS_PER_LOCATION: 2000
+prioritising_methods: "['remove_duplicates_by_hash', 'embedding_limit_cam',  'embedding_limit_location']"
+
+    #[
+    #'remove_duplicates_by_hash',
+    #'bbox_limit_location',
+    #'rand_limit_cam' 
+    #'rand_limit_location' 
+    #'embedding_limit_cam'  
+    #'embedding_limit_location'
+    #]
+
+#Inference parameters (moved to arguments for inference.main())
+#EMPTY_THRESHOLD: 0.4 # If the classifier score is below this the image will automatically be classified as 'empty'
+#MD_EMPTY_THRESHOLD:  0.4 #If the md score is below this the image will automatically be classed as 'empty' unless classifier > 0.2
+ACTIVATION: 'Sigmoid' # 'SoftMax'  Sigmoid for BCE loss, otherwise Softmax
+
+
+#File and folder names (Could delete all these from here and use the defaults)
+DATA_FOLDER_NM: 'data'
+EXPS_FOLDER_NM: 'experiments'
+IMAGE_FOLDER_NM: 'cropped_images'
+INPUT_FOLDER_NM: 'inputs'
+LABELS_FROM_JSON_NM: 'all_labels.parquet'
+CLEANED_LABELS_NM: 'cleaned_labels.parquet'
+CROP_LABELS_NM: 'crop_labels.parquet'
+TEST_DF_FN: '_test_split.parquet'
+METRICS_FN_SUFFIX: '_monitor_train.png'
+BEST_WEIGHTS_FN_SUFFIX: '_best_weights.pt'
+RESULTS_DF_SUFFIX: '_df.pkl'
+CLASS_NAMES_OUT: '_class_names.json'
+WEIGHTS_FOLDER_SUFFIX: '_weights'
+RESULTS_FOLDER_NM: 'results' 
+MODELS_FOLDER_NM: 'models'
