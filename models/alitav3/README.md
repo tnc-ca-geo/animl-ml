@@ -1,64 +1,181 @@
-# Alita v3.03 classifier Deployment Instructions
+# Alita v3 Classifier Deployment Instructions
 
-Alita was trained by Olly Powell (of [Weka Research](https://wekaresearch.com/)) for the New Zealand Department of Conservation, and its full repository be found [here](https://github.com/Wologman/Alita).
+The Alita v3 classifier is a PyTorch model for New Zealand species classification, originally developed by the Wologman team. The original repository can be found [here](https://github.com/Wologman/Alita).
 
-The full Alita pipeline is an ensemble comprised of MegaDetector, an 81-species classsifer, and a final heuristic decision making step to reconcile predictions. However, the instructions below are for deploying just the species classifier as a stand-alone endpoint.
+It classifies wildlife species from camera trap images into 79 New Zealand species categories and expects an input of `(480, 480)`.
 
-It's an EfficientNet v2 model, trained in PyTorch (Lightning), that classifies 81 species found in New Zealand. It expects an input of `(480, 480)`.
+## Prerequisites
 
-The following instructions are for deploying this PyTorch model to a Sagemaker Serverless Endpoint served in a Torchserve container. In order to create and deploy the model archive from scratch, we need to work across two different environments:
+1. Compiled model weights at `exported-model/alitav3_compiled_cpu.pt`
+2. Docker installed and running
+3. AWS CLI configured (for deployment)
+4. Python environment with required dependencies
 
-1. your local environment, where you will:
+## Quick Start
 
-   1. Download the model weights and class list from s3
-   2. load the model weights into PyTorch and re-compile to torchscript for CPU
-   3. Install dependencies for `torch-model-archiver` and run `torch-model-archiver` to generate the `.mar` file (a bundled archive that includes the torchscript-compiled model and the hander function)
-   4. [Optionally] test the model and handler in a torchserve Docker container by building it and requesting inference locally
-   5. Upload the model archive to s3
+### 1. Prepare the Model for Serving
 
-2. The Sagemaker notebook environment where you will:
-
-   1. download the .mar archive from s3
-   2. build the deploy image and push to ECR
-   3. create a serverless endpoint configuration
-   4. deploy and test a serverless endpoint
-
-## Download and unzip model checkpoint and classes
-
-From this directory, run:
+First, run the preparation notebook to convert class names to TorchServe format:
 
 ```bash
-aws s3 sync s3://animl-model-zoo/alitav3/ .
+jupyter notebook alitav3_prepare_serving.ipynb
 ```
 
-You should have a directory structure that looks like:
+This will create `exported-model/index_to_name.json` from the original class names.
 
-```
-...
-/alitav3
-    |-- exported-model
-        |-- alitav3_compiled_cpu.pt
-        |-- alitav3.mar
-        |-- index_to_name.json
-    |-- original-model
-        |--Exp_60_run_01_best_weights.pt
-        |--Exp_60_run_01_class_names.json
-        |--taxon-mapping.csv
-    ...
-```
+### 2. Build and Test Locally
 
-> **NOTE:** if there's a `.mar` file present in the `/exported-model` directory, that's the older/current Torchscript Model Archive, and unless you want to re-compile this model for CPU and create a new `.mar` file (perhaps because the weights or the inference code changed), you can skip to the [Locally build/test step](#locally-build-serve-and-test-the-torchscript-model-with-torchserve).
-
-## Load the weights into PyTorch locally and re-compile to Torchserve for CPU
-
-Create and activate a Conda environment and install dependencies by running the following form this directory:
+Run the automated build and test script:
 
 ```bash
-conda create -n alitav3 python=3.11 pip -y
-conda activate alitav3
-pip install -r requirements.txt
+chmod +x build_and_test.sh
+./build_and_test.sh
 ```
 
-Then step through `alitav3_compile.ipynb`. The notebook should produce a torchscript model 'alitav3_compiled_cpu.pt' in the `./exported-model/` directory.
+This script will:
+- Install `torch-model-archiver`
+- Create the model archive (.mar file)
+- Build the Docker image
+- Start the container locally
 
-Note for others using these steps to deploy a different model: the versions of `torch` and `torchvision` that you pin in your `Dockerfile` used for serving must match the versions you use when compiling the model to torchscript. To check which versions you're using in your venv use `pip freeze` and to bump the versions up (or down) use `pip install --upgrade` (e.g. `pip install --upgrade torchvision==0.15.1`).
+### 3. Test the Model
+
+Once the container is running, test it with a sample image:
+
+```bash
+python test_inference.py /path/to/test/image.jpg --bbox 0 0 1 1
+```
+
+Or use curl directly:
+
+```bash
+# Encode your test image
+IMG_STRING=$(base64 -i /path/to/test/image.jpg)
+BBOX=[0,0,1,1]
+PAYLOAD=$( jq -n \
+            --arg image "$IMG_STRING" \
+            --arg bbox "$BBOX" \
+            '{image: $image, bbox: $bbox}' )
+
+# Test the endpoint
+curl -i http://127.0.0.1:8080/invocations -F body=$PAYLOAD
+```
+
+Expected response format:
+```json
+{
+  "kiwi": 0.8234,
+  "possum": 0.1234,
+  "cat": 0.0456,
+  "rat": 0.0076,
+  "mouse": 0.0001
+}
+```
+
+## Manual Steps
+
+If you prefer to run the steps manually:
+
+### 1. Create Model Archive
+
+```bash
+pip install torch-model-archiver
+
+torch-model-archiver \
+    --model-name alitav3 \
+    --version 1.0.0 \
+    --serialized-file exported-model/alitav3_compiled_cpu.pt \
+    --extra-files exported-model/index_to_name.json \
+    --handler alitav3_handler.py
+
+mv alitav3.mar exported-model/alitav3.mar
+```
+
+### 2. Build Docker Image
+
+```bash
+docker build -t alitav3:latest-cpu .
+```
+
+### 3. Run Container
+
+```bash
+bash docker-run.sh $(pwd)/exported-model
+```
+
+## Deployment to SageMaker
+
+For production deployment to AWS SageMaker Serverless Inference:
+
+1. Start a SageMaker Notebook instance
+2. Clone this repository
+3. Run the deployment notebook: `alitav3_deploy.ipynb`
+
+The deployment notebook will:
+- Build and push the Docker image to ECR
+- Create SageMaker model and endpoint configurations
+- Deploy batch and real-time serverless endpoints
+- Test the deployed endpoints
+
+## Model Details
+
+- **Input Size**: 480x480 pixels
+- **Classes**: 79 New Zealand species
+- **Preprocessing**: ImageNet normalization (mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+- **Postprocessing**: Sigmoid activation for probability scores
+- **Architecture**: Based on original Alita v3 model
+
+## File Structure
+
+```
+alitav3/
+├── exported-model/
+│   ├── alitav3_compiled_cpu.pt      # Compiled model
+│   ├── index_to_name.json           # Class mappings
+│   └── alitav3.mar                  # TorchServe model archive
+├── original-model/
+│   ├── Exp_60_run_01_best_weights.pt    # Original weights
+│   ├── Exp_60_run_01_class_names.json   # Original class names
+│   └── Exp_60_run_01.yaml               # Model config
+├── deployment/
+│   ├── config.properties            # TorchServe config
+│   └── dockerd-entrypoint.sh        # Container entry point
+├── tests/
+│   └── test-data/                   # Test images
+├── alitav3_handler.py               # Custom TorchServe handler
+├── alitav3_prepare_serving.ipynb    # Preparation notebook
+├── alitav3_deploy.ipynb             # SageMaker deployment notebook
+├── build_and_test.sh               # Automated build script
+├── test_inference.py               # Test script
+├── docker-run.sh                   # Docker run script
+├── Dockerfile                      # Container definition
+└── README.md                       # This file
+```
+
+## Troubleshooting
+
+### Container Issues
+- Ensure Docker is running and you have sufficient memory allocated
+- Check container logs: `docker logs $(docker ps -q --filter ancestor=alitav3:latest-cpu)`
+
+### Model Loading Issues
+- Verify the compiled model file exists and is not corrupted
+- Check that the model was compiled with compatible PyTorch versions
+
+### Inference Issues
+- Ensure images are properly base64 encoded
+- Verify bounding box coordinates are in relative format [ymin, xmin, ymax, xmax]
+- Check that the image format is supported (JPEG, PNG)
+
+### Memory Issues
+- The model requires approximately 4GB of memory
+- Adjust Docker memory limits if needed
+- For SageMaker, ensure sufficient memory allocation in endpoint config
+
+## Stopping the Container
+
+To stop the running container:
+
+```bash
+docker stop $(docker ps -q --filter ancestor=alitav3:latest-cpu)
+```
