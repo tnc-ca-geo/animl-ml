@@ -33,6 +33,7 @@ chmod +x build_and_test.sh
 ```
 
 This script will:
+
 - Install `torch-model-archiver`
 - Create the model archive (.mar file)
 - Build the Docker image
@@ -62,6 +63,7 @@ curl -i http://127.0.0.1:8080/invocations -F body=$PAYLOAD
 ```
 
 Expected response format:
+
 ```json
 {
   "kiwi": 0.8234,
@@ -83,12 +85,18 @@ pip install torch-model-archiver
 
 torch-model-archiver \
     --model-name alitav3 \
-    --version 1.0.0 \
+    --version 3.0.3 \
     --serialized-file exported-model/alitav3_compiled_cpu.pt \
     --extra-files exported-model/index_to_name.json \
     --handler alitav3_handler.py
 
 mv alitav3.mar exported-model/alitav3.mar
+```
+
+Finally, upload the exported files to S3 so that they are accessible for deployment and future use:
+
+```bash
+aws s3 cp --recursive ./exported-model s3://animl-model-zoo/alitav3/exported-model
 ```
 
 ### 2. Build Docker Image
@@ -112,6 +120,7 @@ For production deployment to AWS SageMaker Serverless Inference:
 3. Run the deployment notebook: `alitav3_deploy.ipynb`
 
 The deployment notebook will:
+
 - Build and push the Docker image to ECR
 - Create SageMaker model and endpoint configurations
 - Deploy batch and real-time serverless endpoints
@@ -155,19 +164,23 @@ alitav3/
 ## Troubleshooting
 
 ### Container Issues
+
 - Ensure Docker is running and you have sufficient memory allocated
 - Check container logs: `docker logs $(docker ps -q --filter ancestor=alitav3:latest-cpu)`
 
 ### Model Loading Issues
+
 - Verify the compiled model file exists and is not corrupted
 - Check that the model was compiled with compatible PyTorch versions
 
 ### Inference Issues
+
 - Ensure images are properly base64 encoded
 - Verify bounding box coordinates are in relative format [ymin, xmin, ymax, xmax]
 - Check that the image format is supported (JPEG, PNG)
 
 ### Memory Issues
+
 - The model requires approximately 4GB of memory
 - Adjust Docker memory limits if needed
 - For SageMaker, ensure sufficient memory allocation in endpoint config
