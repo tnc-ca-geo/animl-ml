@@ -151,3 +151,13 @@ The deployment notebook will:
 - Create SageMaker model and endpoint configurations
 - Deploy batch and real-time serverless endpoints
 - Test the deployed endpoints
+
+## 6. Convert Taxonomy to MongoDB Format
+
+To convert the taxonomy mapping file to a MongoDB-compatible `MLModel` record, run the following script:
+
+```bash
+python transform_taxonomy.py original-model/taxon-mapping.csv exported-model/alitav3-mongodb-record.json
+```
+
+This will read the `taxon-mapping.csv` file and generate a JSON file `alitav3-mongodb-record.json` in the `exported-model` directory, which can be used to create the `MLModel` record in the Animl MongoDB DB. See [Step 5: Add MLModel Record to MongoDB](../../README.md#step-5-add-mlmodel-record-to-mongodb) in this repo's primary README.md for more context.
