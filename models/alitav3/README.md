@@ -84,7 +84,7 @@ Finally, upload the exported files to S3 so that they are accessible for deploym
 aws s3 cp --recursive ./exported-model s3://animl-model-zoo/alitav3/exported-model
 ```
 
-## 4. Test the Container Locally
+## 4. Testing the Container Locally
 
 Start the container locally:
 
@@ -137,6 +137,14 @@ Top 5 predictions:
  5. kaka                 0.0000
 ```
 
+### Compare the containerized model's predictions against expected outputs
+
+Olly Powell provided us with test images and a CSV of expected predictions, which we can compare to the results from the containerized model running locally with the following script:
+
+```bash
+python ./tests/compare_predictions.py original-model/Exp_60_run_01_full_predictions.csv /path/to/test/images
+```
+
 ## 5. Deployment to SageMaker
 
 For production deployment to AWS SageMaker Serverless Inference:
@@ -161,3 +169,5 @@ python transform_taxonomy.py original-model/taxon-mapping.csv exported-model/ali
 ```
 
 This will read the `taxon-mapping.csv` file and generate a JSON file `alitav3-mongodb-record.json` in the `exported-model` directory, which can be used to create the `MLModel` record in the Animl MongoDB DB. See [Step 5: Add MLModel Record to MongoDB](../../README.md#step-5-add-mlmodel-record-to-mongodb) in this repo's primary README.md for more context.
+
+# Testing
