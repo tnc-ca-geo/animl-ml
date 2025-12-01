@@ -1,0 +1,470 @@
+{
+  "_id": "alitav3",
+  "description": "Alita v3.03 New Zealand Species Classifier",
+  "version": "v3.03",
+  "defaultConfThreshold": 0.5,
+  "categories": [
+    {
+      "_id": "rat",
+      "name": "rat",
+      "color": "#AD7F58",
+      "taxonomy": "mammalia;rodentia;muridae;rattus;rattus"
+    },
+    {
+      "_id": "mouse",
+      "name": "mouse",
+      "color": "#FFE629",
+      "taxonomy": "mammalia;rodentia;muridae;mus;musculus"
+    },
+    {
+      "_id": "human",
+      "name": "human",
+      "color": "#0090FF",
+      "taxonomy": "mammalia;primates;hominidae;homo;sapiens"
+    },
+    {
+      "_id": "horse",
+      "name": "horse",
+      "color": "#30A46C",
+      "taxonomy": "mammalia;perissodactyla;equidae;equus;caballus"
+    },
+    {
+      "_id": "rabbit",
+      "name": "rabbit",
+      "color": "#A18072",
+      "taxonomy": "mammalia;lagomorpha;leporidae;oryctolagus;cuniculus"
+    },
+    {
+      "_id": "hare",
+      "name": "hare",
+      "color": "#BDEE63",
+      "taxonomy": "mammalia;lagomorpha;leporidae;lepus;europaeus"
+    },
+    {
+      "_id": "hedgehog",
+      "name": "hedgehog",
+      "color": "#6E56CF",
+      "taxonomy": "mammalia;erinaceomorpha;erinaceidae;erinaceus;europaeus"
+    },
+    {
+      "_id": "possum",
+      "name": "possum",
+      "color": "#8E4EC6",
+      "taxonomy": "mammalia;diprotodontia;phalangeridae;trichosurus;vulpecula"
+    },
+    {
+      "_id": "wallaby",
+      "name": "wallaby",
+      "color": "#6E56CF",
+      "taxonomy": "mammalia;diprotodontia;macropodidae;notamacropus;rufogriseus"
+    },
+    {
+      "_id": "sealion",
+      "name": "sealion",
+      "color": "#BDEE63",
+      "taxonomy": "mammalia;carnivora;otariidae;phocarctos;hookeri"
+    },
+    {
+      "_id": "weasel",
+      "name": "weasel",
+      "color": "#8D8D8D",
+      "taxonomy": "mammalia;carnivora;mustelidae;mustela;nivalis"
+    },
+    {
+      "_id": "ferret",
+      "name": "ferret",
+      "color": "#E5484D",
+      "taxonomy": "mammalia;carnivora;mustelidae;mustela;furo"
+    },
+    {
+      "_id": "stoat",
+      "name": "stoat",
+      "color": "#E93D82",
+      "taxonomy": "mammalia;carnivora;mustelidae;mustela;erminea"
+    },
+    {
+      "_id": "cat",
+      "name": "cat",
+      "color": "#6E56CF",
+      "taxonomy": "mammalia;carnivora;felidae;felis;catus"
+    },
+    {
+      "_id": "dog",
+      "name": "dog",
+      "color": "#AB4ABA",
+      "taxonomy": "mammalia;carnivora;canidae;canis;familiaris"
+    },
+    {
+      "_id": "pig",
+      "name": "pig",
+      "color": "#7CE2FE",
+      "taxonomy": "mammalia;artiodactyla;suidae;sus;scrofa"
+    },
+    {
+      "_id": "deer",
+      "name": "deer",
+      "color": "#E54666",
+      "taxonomy": "mammalia;artiodactyla;cervidae;cervus;elaphus"
+    },
+    {
+      "_id": "chamois",
+      "name": "chamois",
+      "color": "#978365",
+      "taxonomy": "mammalia;artiodactyla;bovidae;rupicapra;rupicapra"
+    },
+    {
+      "_id": "sheep",
+      "name": "sheep",
+      "color": "#E54666",
+      "taxonomy": "mammalia;artiodactyla;bovidae;ovis;aries"
+    },
+    {
+      "_id": "tahr",
+      "name": "tahr",
+      "color": "#12A594",
+      "taxonomy": "mammalia;artiodactyla;bovidae;hemitragus;jemlahicus"
+    },
+    {
+      "_id": "goat",
+      "name": "goat",
+      "color": "#BDEE63",
+      "taxonomy": "mammalia;artiodactyla;bovidae;capra;hircus"
+    },
+    {
+      "_id": "cow",
+      "name": "cow",
+      "color": "#0090FF",
+      "taxonomy": "mammalia;artiodactyla;bovidae;bos;taurus"
+    },
+    {
+      "_id": "morepork",
+      "name": "morepork",
+      "color": "#29A383",
+      "taxonomy": "aves;strigiformes;strigidae;ninox;novaeseelandiae"
+    },
+    {
+      "_id": "yellow_eyed_penguin",
+      "name": "yellow_eyed_penguin",
+      "color": "#29A383",
+      "taxonomy": "aves;sphenisciformes;spheniscidae;megadyptes;antipodes"
+    },
+    {
+      "_id": "little_blue_penguin",
+      "name": "little_blue_penguin",
+      "color": "#46A758",
+      "taxonomy": "aves;sphenisciformes;spheniscidae;eudyptula;minor"
+    },
+    {
+      "_id": "fiordland_crested_penguin",
+      "name": "fiordland_crested_penguin",
+      "color": "#E5484D",
+      "taxonomy": "aves;sphenisciformes;spheniscidae;eudyptes;pachyrhynchus"
+    },
+    {
+      "_id": "rosella",
+      "name": "rosella",
+      "color": "#FFC53D",
+      "taxonomy": "aves;psittaciformes;psittacidae;platycercus;eximius"
+    },
+    {
+      "_id": "kea",
+      "name": "kea",
+      "color": "#E93D82",
+      "taxonomy": "aves;psittaciformes;psittacidae;nestor;notabilis"
+    },
+    {
+      "_id": "kaka",
+      "name": "kaka",
+      "color": "#E54666",
+      "taxonomy": "aves;psittaciformes;psittacidae;nestor;meridionalis"
+    },
+    {
+      "_id": "parakeet",
+      "name": "parakeet",
+      "color": "#E5484D",
+      "taxonomy": "aves;psittaciformes;psittacidae;cyanoramphus;novaezelandiae"
+    },
+    {
+      "_id": "white_faced_heron",
+      "name": "white_faced_heron",
+      "color": "#12A594",
+      "taxonomy": "aves;pelecaniformes;ardeidae;egretta;novaehollandiae"
+    },
+    {
+      "_id": "silvereye",
+      "name": "silvereye",
+      "color": "#8D8D8D",
+      "taxonomy": "aves;passeriformes;zosteropidae;zosterops;lateralis"
+    },
+    {
+      "_id": "thrush",
+      "name": "thrush",
+      "color": "#F76B15",
+      "taxonomy": "aves;passeriformes;turdidae;turdus;philomelos"
+    },
+    {
+      "_id": "blackbird",
+      "name": "blackbird",
+      "color": "#12A594",
+      "taxonomy": "aves;passeriformes;turdidae;turdus;merula"
+    },
+    {
+      "_id": "starling",
+      "name": "starling",
+      "color": "#E93D82",
+      "taxonomy": "aves;passeriformes;sturnidae;sturnus;vulgaris"
+    },
+    {
+      "_id": "myna",
+      "name": "myna",
+      "color": "#6E56CF",
+      "taxonomy": "aves;passeriformes;sturnidae;acridotheres;tristis"
+    },
+    {
+      "_id": "fantail",
+      "name": "fantail",
+      "color": "#A18072",
+      "taxonomy": "aves;passeriformes;rhipiduridae;rhipidura;fuliginosa"
+    },
+    {
+      "_id": "dunnock",
+      "name": "dunnock",
+      "color": "#D6409F",
+      "taxonomy": "aves;passeriformes;prunellidae;prunella;modularis"
+    },
+    {
+      "_id": "tomtit",
+      "name": "tomtit",
+      "color": "#F76B15",
+      "taxonomy": "aves;passeriformes;petroicidae;petroica;macrocephala"
+    },
+    {
+      "_id": "robin",
+      "name": "robin",
+      "color": "#3E63DD",
+      "taxonomy": "aves;passeriformes;petroicidae;petroica;longipes"
+    },
+    {
+      "_id": "sparrow",
+      "name": "sparrow",
+      "color": "#978365",
+      "taxonomy": "aves;passeriformes;passeridae;passer;domesticus"
+    },
+    {
+      "_id": "pipit",
+      "name": "pipit",
+      "color": "#46A758",
+      "taxonomy": "aves;passeriformes;motacillidae;anthus;novaeseelandiae"
+    },
+    {
+      "_id": "tui",
+      "name": "tui",
+      "color": "#E5484D",
+      "taxonomy": "aves;passeriformes;meliphagidae;prosthemadera;novaeseelandiae"
+    },
+    {
+      "_id": "bellbird",
+      "name": "bellbird",
+      "color": "#AB4ABA",
+      "taxonomy": "aves;passeriformes;meliphagidae;anthornis;melanura"
+    },
+    {
+      "_id": "finch",
+      "name": "finch",
+      "color": "#3E63DD",
+      "taxonomy": "aves;passeriformes;fringillidae;carduelis;carduelis"
+    },
+    {
+      "_id": "redpoll",
+      "name": "redpoll",
+      "color": "#E54666",
+      "taxonomy": "aves;passeriformes;fringillidae;acanthis;flammea"
+    },
+    {
+      "_id": "yellowhammer",
+      "name": "yellowhammer",
+      "color": "#AD7F58",
+      "taxonomy": "aves;passeriformes;emberizidae;emberiza;citrinella"
+    },
+    {
+      "_id": "magpie",
+      "name": "magpie",
+      "color": "#8E4EC6",
+      "taxonomy": "aves;passeriformes;cracticidae;gymnorhina;tibicen"
+    },
+    {
+      "_id": "tieke",
+      "name": "tieke",
+      "color": "#D6409F",
+      "taxonomy": "aves;passeriformes;callaeatidae;philesturnus;rufusater"
+    },
+    {
+      "_id": "grey_warbler",
+      "name": "grey_warbler",
+      "color": "#86EAD4",
+      "taxonomy": "aves;passeriformes;acanthizidae;gerygone;igata"
+    },
+    {
+      "_id": "rifleman",
+      "name": "rifleman",
+      "color": "#7CE2FE",
+      "taxonomy": "aves;passeriformes;acanthisittidae;acanthisitta;chloris"
+    },
+    {
+      "_id": "crake",
+      "name": "crake",
+      "color": "#AB4ABA",
+      "taxonomy": "aves;gruiformes;rallidae;porzana;pusilla"
+    },
+    {
+      "_id": "pukeko",
+      "name": "pukeko",
+      "color": "#D6409F",
+      "taxonomy": "aves;gruiformes;rallidae;porphyrio;melanotus"
+    },
+    {
+      "_id": "takahe",
+      "name": "takahe",
+      "color": "#7CE2FE",
+      "taxonomy": "aves;gruiformes;rallidae;porphyrio;hochstetteri"
+    },
+    {
+      "_id": "banded_rail",
+      "name": "banded_rail",
+      "color": "#E93D82",
+      "taxonomy": "aves;gruiformes;rallidae;gallirallus;philippensis"
+    },
+    {
+      "_id": "weka",
+      "name": "weka",
+      "color": "#AD7F58",
+      "taxonomy": "aves;gruiformes;rallidae;gallirallus;australis"
+    },
+    {
+      "_id": "pheasant",
+      "name": "pheasant",
+      "color": "#AD7F58",
+      "taxonomy": "aves;galliformes;phasianidae;phasianus;colchicus"
+    },
+    {
+      "_id": "chicken",
+      "name": "chicken",
+      "color": "#A18072",
+      "taxonomy": "aves;galliformes;phasianidae;gallus;gallus"
+    },
+    {
+      "_id": "quail",
+      "name": "quail",
+      "color": "#978365",
+      "taxonomy": "aves;galliformes;phasianidae;coturnix;japonica"
+    },
+    {
+      "_id": "nz_falcon",
+      "name": "nz_falcon",
+      "color": "#FFC53D",
+      "taxonomy": "aves;falconiformes;falconidae;falco;novaeseelandiae"
+    },
+    {
+      "_id": "kereru",
+      "name": "kereru",
+      "color": "#FFC53D",
+      "taxonomy": "aves;columbiformes;columbidae;hemiphaga;novaeseelandiae"
+    },
+    {
+      "_id": "stilt",
+      "name": "stilt",
+      "color": "#29A383",
+      "taxonomy": "aves;charadriiformes;recurvirostridae;himantopus;novaezelandiae"
+    },
+    {
+      "_id": "black_backed_gull",
+      "name": "black_backed_gull",
+      "color": "#BDEE63",
+      "taxonomy": "aves;charadriiformes;laridae;larus;dominicanus"
+    },
+    {
+      "_id": "black_billed_gull",
+      "name": "black_billed_gull",
+      "color": "#00A2C7",
+      "taxonomy": "aves;charadriiformes;laridae;chroicocephalus;bulleri"
+    },
+    {
+      "_id": "black_fronted_tern",
+      "name": "black_fronted_tern",
+      "color": "#FFC53D",
+      "taxonomy": "aves;charadriiformes;laridae;chlidonias;albostriatus"
+    },
+    {
+      "_id": "oystercatcher",
+      "name": "oystercatcher",
+      "color": "#7CE2FE",
+      "taxonomy": "aves;charadriiformes;haematopodidae;haematopus;unicolor"
+    },
+    {
+      "_id": "spurwing_plover",
+      "name": "spurwing_plover",
+      "color": "#8E4EC6",
+      "taxonomy": "aves;charadriiformes;charadriidae;vanellus;miles"
+    },
+    {
+      "_id": "shore_plover",
+      "name": "shore_plover",
+      "color": "#F76B15",
+      "taxonomy": "aves;charadriiformes;charadriidae;thinornis;novaeseelandiae"
+    },
+    {
+      "_id": "banded_dotterel",
+      "name": "banded_dotterel",
+      "color": "#FFC53D",
+      "taxonomy": "aves;charadriiformes;charadriidae;charadrius;bicinctus"
+    },
+    {
+      "_id": "wrybill",
+      "name": "wrybill",
+      "color": "#978365",
+      "taxonomy": "aves;charadriiformes;charadriidae;anarhynchus;frontalis"
+    },
+    {
+      "_id": "kiwi",
+      "name": "kiwi",
+      "color": "#F76B15",
+      "taxonomy": "aves;apterygiformes;apterygidae;apteryx;mantelli"
+    },
+    {
+      "_id": "paradise_duck",
+      "name": "paradise_duck",
+      "color": "#AB4ABA",
+      "taxonomy": "aves;anseriformes;anatidae;tadorna;variegata"
+    },
+    {
+      "_id": "swan",
+      "name": "swan",
+      "color": "#E93D82",
+      "taxonomy": "aves;anseriformes;anatidae;cygnus;atratus"
+    },
+    {
+      "_id": "canada_goose",
+      "name": "canada_goose",
+      "color": "#86EAD4",
+      "taxonomy": "aves;anseriformes;anatidae;branta;canadensis"
+    },
+    {
+      "_id": "mallard",
+      "name": "mallard",
+      "color": "#FFC53D",
+      "taxonomy": "aves;anseriformes;anatidae;anas;platyrhynchos"
+    },
+    {
+      "_id": "pateke",
+      "name": "pateke",
+      "color": "#AD7F58",
+      "taxonomy": "aves;anseriformes;anatidae;anas;chlorotis"
+    },
+    {
+      "_id": "harrier",
+      "name": "harrier",
+      "color": "#0090FF",
+      "taxonomy": "aves;accipitriformes;accipitridae;circus;approximans"
+    }
+  ]
+}
