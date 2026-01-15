@@ -7,6 +7,9 @@ import base64
 import torch
 import torchvision
 
+DETENCION_THRESHOLD = 0.4
+IOU_THRESHOLD = 0.45
+
 
 class ModelHandler(BaseHandler):
     """Handler for MegaDetector v1000."""
@@ -37,7 +40,7 @@ class ModelHandler(BaseHandler):
     
     def inference(self, image):
         """Run MegaDetector inference."""
-        return self.model.generate_detections_one_image(image)
+        return self.model.generate_detections_one_image(image, detection_threshold=DETENCION_THRESHOLD)
     
     def postprocess(self, result):
         """Convert MegaDetector output to Animl format with NMS."""
@@ -51,13 +54,14 @@ class ModelHandler(BaseHandler):
             det['bbox'] = self.xywh2xyxy(det['bbox'])
         
         # Convert to tensors for NMS
-        boxes = torch.tensor([[d['bbox'][0], d['bbox'][1], 
-                               d['bbox'][0] + d['bbox'][2], 
-                               d['bbox'][1] + d['bbox'][3]] for d in detections])
+        boxes = torch.tensor([[d['bbox'][0], 
+                               d['bbox'][1], 
+                               d['bbox'][0], 
+                               d['bbox'][1]] for d in detections])
         scores = torch.tensor([d['conf'] for d in detections])
         
         # Apply NMS with IoU threshold of 0.45
-        keep_indices = torchvision.ops.nms(boxes, scores, iou_threshold=0.45)
+        keep_indices = torchvision.ops.nms(boxes, scores, iou_threshold=IOU_THRESHOLD)
         
         # Filter detections
         filtered_detections = []
@@ -78,10 +82,10 @@ class ModelHandler(BaseHandler):
 
     def xywh2xyxy(self, bbox):
         return [
-                bbox[0],
-                bbox[1],
-                bbox[0] + bbox[2],
-                bbox[1] + bbox[3]
+            bbox[0],
+            bbox[1],
+            bbox[0] + bbox[2],
+            bbox[1] + bbox[3]
         ]
 
 
