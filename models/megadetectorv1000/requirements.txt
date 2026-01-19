@@ -1,0 +1,4 @@
+fastapi
+uvicorn
+megadetector>=10.0.0
+pillow
