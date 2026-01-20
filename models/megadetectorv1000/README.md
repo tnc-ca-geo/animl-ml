@@ -24,6 +24,23 @@ curl -X POST http://localhost:8080/invocations \
   --data-binary @image.jpg
 ```
 
+## Benchmarking
+
+To compare MDv1000 performance against MDv5:
+
+1. Ensure you have test images in `./validation/` directory
+2. Run the benchmark script:
+```bash
+./run_benchmark.sh
+```
+
+This will:
+- Start MDv5 container (from ECR), run benchmark, stop container
+- Start MDv1000 container, run benchmark, stop container
+- Output comparison table and save detailed results to `benchmark_results.json`
+
+Results include mean, median, and P95 latency for both models.
+
 ## Processing Pipeline
 
 The MegaDetector PTDetector handles preprocessing and post-processing internally:

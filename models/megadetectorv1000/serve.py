@@ -14,8 +14,7 @@ from megadetector.detection.run_detector import load_detector
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -121,7 +120,7 @@ async def invoke(request: Request, model: Model = Depends(load_model)):
                 }
             )
         format_time = time.time() - format_start
-        
+
         total_time = time.time() - request_start
         logger.info(
             f"Request completed in {total_time:.3f}s "
