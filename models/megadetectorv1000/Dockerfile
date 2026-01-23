@@ -25,6 +25,7 @@ COPY serve.py /opt/ml/code/serve.py
 ENV PYTHONUNBUFFERED=TRUE
 ENV PYTHONDONTWRITEBYTECODE=TRUE
 ENV PATH="/opt/ml/code:${PATH}"
+ENV PYTHONPATH="/usr/local/lib/python3.13/site-packages/yolov5:${PYTHONPATH}"
 ENV MODEL_PATH=/opt/ml/model/md_v1000.0.0-redwood.pt
 ENV DETECTION_THRESHOLD=0.0005
 
