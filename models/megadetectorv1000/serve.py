@@ -52,8 +52,12 @@ app = FastAPI()
 
 @app.get("/ping")
 async def ping():
-    # if the model load fails or the threshold is invalid,
-    # the container will have already crashed
+    """
+    Health check endpoint.
+
+    If the model load fails or the threshold is invalid,
+    the container will have already crashed
+    """
     return {"status": "Healthy"}
 
 
