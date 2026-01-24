@@ -123,7 +123,7 @@ async def invoke(request: Request):
             f"- {len(formatted_detections)} detections"
         )
 
-        return [formatted_detections]
+        return formatted_detections
 
     except Exception as e:
         total_time = time.time() - request_start
