@@ -11,6 +11,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import HTTPException
 import uvicorn
 from ultralytics import YOLO
+from typing import List
 
 # Don't freak out over truncated images
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -61,8 +62,6 @@ async def ping():
     """
     return {"status": "Healthy"}
 
-
-from typing import List
 
 def get_crop(image: Image.Image, bbox: List[float]) -> Image.Image:
     """
