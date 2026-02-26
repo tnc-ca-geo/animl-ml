@@ -145,6 +145,12 @@ async def invoke(request: Request):
         crop_time = time.time() - crop_start
 
         # Run inference
+        # Note: YOLO automatically applies preprocessing transforms internally:
+        # 1. CenterCrop to 224x224
+        # 2. ToTensor (converts to tensor and normalizes [0,255] -> [0,1])
+        # 3. Normalize with mean/std (if specified)
+        # See: https://github.com/ultralytics/ultralytics/blob/v8.0.230/ultralytics/engine/predictor.py#L213-L214
+        # Transform definition: https://github.com/ultralytics/ultralytics/blob/v8.0.230/ultralytics/data/augment.py#L985-L992
         inference_start = time.time()
         results = model(crop, verbose=False)
         
