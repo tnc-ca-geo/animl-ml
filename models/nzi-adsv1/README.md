@@ -1,5 +1,8 @@
 # NZI-ADS-v1 SageMaker Handler
 
+Credit to [Peter van Lunteren of Addax Data Science](https://addaxdatascience.com/) and the [New Zealand Department of Conservation](https://www.doc.govt.nz/) for training and open sourcing this classifier.
+
+
 This handler serves the NZI-ADS-v1 (New Zealand Invasive Species Classifier) model for inference via FastAPI.
 
 ## Model Information

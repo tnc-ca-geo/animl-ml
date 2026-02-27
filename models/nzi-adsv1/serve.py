@@ -1,3 +1,10 @@
+"""
+This implementation is adapted from the `inference.py` script found in the 
+HuggingFace repository for the NZI-ADS-v1 model shared by Peter van Lunteren
+of Addax Data Science.
+
+https://huggingface.co/Addax-Data-Science/NZI-ADS-v1/blob/main/inference.py
+"""
 import io
 import base64
 import os
