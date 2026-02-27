@@ -133,4 +133,66 @@ print(predictions)
 
 ## Deployment to SageMaker
 
-See `nzi-adsv1_deploy.ipynb` for step-by-step deployment instructions.
+### Step 1: Push Docker Image to ECR
+
+```bash
+# Authenticate to ECR
+aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin <account-id>.dkr.ecr.<region>.amazonaws.com
+
+# Create ECR repository (if it doesn't exist)
+aws ecr create-repository --repository-name nzi-adsv1 --region <region>
+
+# Tag the image
+docker tag nzi-adsv1:latest <account-id>.dkr.ecr.<region>.amazonaws.com/nzi-adsv1:latest
+
+# Push to ECR
+docker push <account-id>.dkr.ecr.<region>.amazonaws.com/nzi-adsv1:latest
+```
+
+### Step 2: Deploy to SageMaker Serverless Endpoint
+
+See `nzi-adsv1_deploy.ipynb` for step-by-step deployment instructions. The notebook will:
+- Create SageMaker model from ECR image
+- Create endpoint configurations (batch and real-time)
+- Deploy serverless endpoints
+- Test the deployed endpoints
+
+### Step 3: Add SSM Parameters
+
+Create SSM parameters to map endpoint names to config variables in animl-api:
+
+| Parameter Name                            | Parameter Value                                   |
+| ----------------------------------------- | ------------------------------------------------- |
+| `/ml/nzi-adsv1-batch-endpoint-dev`        | `nzi-adsv1-concurrency-<batch_concurrency>`       |
+| `/ml/nzi-adsv1-batch-endpoint-prod`       | `nzi-adsv1-concurrency-<batch_concurrency>`       |
+| `/ml/nzi-adsv1-realtime-endpoint-dev`     | `nzi-adsv1-concurrency-<realtime_concurrency>`    |
+| `/ml/nzi-adsv1-realtime-endpoint-prod`    | `nzi-adsv1-concurrency-<realtime_concurrency>`    |
+
+### Step 4: Update animl-api
+
+In the [animl-api](https://github.com/tnc-ca-geo/animl-api) repository:
+1. Fetch new SSM parameters
+2. Implement model interface in `modelInterfaces.ts`
+3. Add request/response handling for NZI-ADS-v1 format
+
+### Step 5: Convert Taxonomy to MongoDB Format
+
+To convert the class list to a MongoDB-compatible `MLModel` record:
+
+```bash
+python transform_taxonomy.py exported-model/nzi-adsv1-mongodb-record.json
+```
+
+This will generate a JSON file that can be used to create the `MLModel` record in the Animl MongoDB database.
+
+**Important**: Scrub periods (`.`) and dollar signs (`$`) from category names when creating the record.
+
+### Step 6: Add MLModel Record to MongoDB
+
+Create an `MLModel` document with:
+- Model metadata (name, version, endpoint info)
+- Array of 17 `categories` (one for each class: bird, cat, deer, dog, goat, hare, hedgehog, human, mustelid, pig, possum, rabbit, rat, rodent, sheep, ship-rat, vehicle)
+
+### Step 7: Make Model Available to Projects
+
+Add the new `MLModel._id` to each Project's `Project.availableMLModels` array to make it available for use in [Automation Rules](https://docs.animl.camera/fundamentals/automation-rules).
