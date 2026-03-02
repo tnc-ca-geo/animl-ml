@@ -8,7 +8,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python packages with exact versions from model training
+# Install Python packages with versions matching Addax environment
+# PyTorch 2.0.1, torchvision 0.15.2, ultralytics 8.0.191
 COPY requirements.txt /opt/ml/requirements.txt
 RUN pip install --no-cache-dir -r /opt/ml/requirements.txt \
     && find /usr/local/lib/python3.8/site-packages -name "*.pyc" -delete

@@ -126,6 +126,13 @@ def get_crop(image: Image.Image, bbox: List[float]) -> Image.Image:
 async def invoke(request: Request):
     """
     Run NZI-ADS-v1 classification on a cropped image.
+
+    Args:
+        request: FastAPI Request object
+        image: Base64-encoded image
+        bbox: Normalized bounding box [x, y, width, height] in range [0.0, 1.0]
+    Returns:
+        Dictionary of class names and probabilities
     """
     request_start = time.time()
     try:
@@ -138,9 +145,8 @@ async def invoke(request: Request):
         image_bytes = base64.b64decode(payload['image'])
         image = Image.open(io.BytesIO(image_bytes))
         
-        # Convert bbox from [y1, x1, y2, x2] to [x, y, width, height]
-        bbox_input = payload['bbox']
-        bbox = [bbox_input[1], bbox_input[0], bbox_input[3] - bbox_input[1], bbox_input[2] - bbox_input[0]]
+        # bbox in format [x, y, width, height]
+        bbox = payload['bbox']
         
         decode_time = time.time() - decode_start
         logger.info(f"Image decoded in {decode_time:.3f}s - size: {image.size}, bbox: {bbox}")

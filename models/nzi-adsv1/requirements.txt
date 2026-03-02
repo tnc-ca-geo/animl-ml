@@ -1,6 +1,6 @@
-ultralytics==8.0.230
-torch==1.10.1
-torchvision==0.11.2
+ultralytics==8.0.191
+torch==2.0.1
+torchvision==0.15.2
 pillow
 fastapi
 uvicorn
