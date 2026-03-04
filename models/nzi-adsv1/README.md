@@ -46,7 +46,7 @@ curl -X POST http://localhost:8080/invocations \
 
 The handler expects a JSON payload with:
 - `image`: Base64-encoded image string
-- `bbox`: Bounding box in MegaDetector format `[y1, x1, y2, x2]` (normalized 0-1)
+- `bbox`: Bounding box in [x, y, width, height] format (normalized 0-1)
 
 ```json
 {
@@ -60,17 +60,14 @@ The handler expects a JSON payload with:
 ### 1. Image Decoding
 - Decodes base64 image to PIL Image
 
-### 2. Bbox Conversion
-- Converts from MegaDetector format `[y1, x1, y2, x2]` to cropping format `[x, y, width, height]`
-
-### 3. Image Cropping
+### 2. Image Cropping
 Uses Dan Morris's MegaDetector preprocessing method:
 - Squares the bounding box (uses max of width/height)
 - Adds padding to prevent over-enlargement of small animals
 - Centers the detection within the crop
 - Pads with black (0) to maintain square aspect ratio
 
-### 4. Classification
+### 3. Classification
 - Runs YOLOv8 classification on the cropped image
 - Returns probabilities for all 17 classes
 
@@ -80,23 +77,23 @@ The handler returns a JSON object mapping class names to confidence scores:
 
 ```json
 {
-  "bird": 0.001,
-  "cat": 0.002,
-  "deer": 0.003,
-  "dog": 0.001,
-  "goat": 0.001,
-  "hare": 0.002,
-  "hedgehog": 0.001,
-  "human": 0.001,
-  "mustelid": 0.001,
-  "pig": 0.002,
-  "possum": 0.950,
-  "rabbit": 0.001,
-  "rat": 0.001,
-  "rodent": 0.001,
-  "sheep": 0.001,
-  "ship-rat": 0.001,
-  "vehicle": 0.001
+    "caprid": 0.99,
+    "wallaby": 0.99,
+    "rodent": 0.99,
+    "lagomorph": 0.99,
+    "hedgehog": 0.99,
+    "possum": 0.99,
+    "sealion": 0.99,
+    "mustelid": 0.99,
+    "cat": 0.99,
+    "dog": 0.99,
+    "pig": 0.99,
+    "deer": 0.99,
+    "cow": 0.99,
+    "kea": 0.99,
+    "weka": 0.99,
+    "kiwi": 0.99,
+    "other bird": 0.99
 }
 ```
 
@@ -133,33 +130,11 @@ print(predictions)
 
 ## Deployment to SageMaker
 
-### Step 1: Push Docker Image to ECR
+Resources are deployed to AWS using the nzi-adsv1_deploy.ipynb notebook.  If you need to redeploy resources, you should manually remove them through the console before stepping through the notebook.
 
-```bash
-# Authenticate to ECR
-aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin <account-id>.dkr.ecr.<region>.amazonaws.com
+### Add SSM Parameters
 
-# Create ECR repository (if it doesn't exist)
-aws ecr create-repository --repository-name nzi-adsv1 --region <region>
-
-# Tag the image
-docker tag nzi-adsv1:latest <account-id>.dkr.ecr.<region>.amazonaws.com/nzi-adsv1:latest
-
-# Push to ECR
-docker push <account-id>.dkr.ecr.<region>.amazonaws.com/nzi-adsv1:latest
-```
-
-### Step 2: Deploy to SageMaker Serverless Endpoint
-
-See `nzi-adsv1_deploy.ipynb` for step-by-step deployment instructions. The notebook will:
-- Create SageMaker model from ECR image
-- Create endpoint configurations (batch and real-time)
-- Deploy serverless endpoints
-- Test the deployed endpoints
-
-### Step 3: Add SSM Parameters
-
-Create SSM parameters to map endpoint names to config variables in animl-api:
+Outside of the notebook, create SSM parameters to map endpoint names to config variables in animl-api:
 
 | Parameter Name                            | Parameter Value                                   |
 | ----------------------------------------- | ------------------------------------------------- |
@@ -168,31 +143,19 @@ Create SSM parameters to map endpoint names to config variables in animl-api:
 | `/ml/nzi-adsv1-realtime-endpoint-dev`     | `nzi-adsv1-concurrency-<realtime_concurrency>`    |
 | `/ml/nzi-adsv1-realtime-endpoint-prod`    | `nzi-adsv1-concurrency-<realtime_concurrency>`    |
 
-### Step 4: Update animl-api
+### Update animl-api
 
 In the [animl-api](https://github.com/tnc-ca-geo/animl-api) repository:
 1. Fetch new SSM parameters
 2. Implement model interface in `modelInterfaces.ts`
 3. Add request/response handling for NZI-ADS-v1 format
 
-### Step 5: Convert Taxonomy to MongoDB Format
+### Add MLModel Record to MongoDB
 
-To convert the class list to a MongoDB-compatible `MLModel` record:
-
-```bash
-python transform_taxonomy.py exported-model/nzi-adsv1-mongodb-record.json
-```
-
-This will generate a JSON file that can be used to create the `MLModel` record in the Animl MongoDB database.
-
-**Important**: Scrub periods (`.`) and dollar signs (`$`) from category names when creating the record.
-
-### Step 6: Add MLModel Record to MongoDB
-
-Create an `MLModel` document with:
+Create a document in the `mlmodels` collection:
 - Model metadata (name, version, endpoint info)
-- Array of 17 `categories` (one for each class: bird, cat, deer, dog, goat, hare, hedgehog, human, mustelid, pig, possum, rabbit, rat, rodent, sheep, ship-rat, vehicle)
+- Array of 17 the `categories` the model returns
 
-### Step 7: Make Model Available to Projects
+### Make Model Available to Projects
 
-Add the new `MLModel._id` to each Project's `Project.availableMLModels` array to make it available for use in [Automation Rules](https://docs.animl.camera/fundamentals/automation-rules).
+Add the new `mlmodel._id` to each Project's `Project.availableMLModels` array to make it available for use in [Automation Rules](https://docs.animl.camera/fundamentals/automation-rules).
