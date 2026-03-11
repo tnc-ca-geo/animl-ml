@@ -1,0 +1,8 @@
+ultralytics==8.0.191
+torch==2.0.1
+torchvision==0.15.2
+pillow
+fastapi
+uvicorn
+huggingface-hub
+dill
