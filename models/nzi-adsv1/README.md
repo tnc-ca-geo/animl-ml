@@ -114,7 +114,7 @@ with open('image.jpg', 'rb') as f:
 # Prepare payload
 payload = {
     "image": image_b64,
-    "bbox": [0.1, 0.2, 0.5, 0.6]  # [y1, x1, y2, x2] normalized
+    "bbox": [0.1, 0.2, 0.5, 0.6]  # [x, y, w, h] normalized
 }
 
 # Send request
