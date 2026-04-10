@@ -19,8 +19,8 @@ This handler serves the HWI-ADS-v1 (Hawaiian Wildlife Invasives) model for infer
 
 The model is a two-part architecture built on Google's [SpeciesNet](https://github.com/google/cameratrapai) framework:
 
-1. **Backbone**: SpeciesNet's EfficientNet V2 M classifier (v4.0.2a, the "always-crop" variant), converted from ONNX to PyTorch via `onnx2torch`. This is the frozen feature extractor — it outputs a 1280-dimensional feature vector. Weights file: `always_crop_99710272_22x8_v12_epoch_00148.pt` (224MB).
-2. **Head**: A single `nn.Linear(1280, 15)` layer fine-tuned on Hawaiian camera trap data. Stored in a checkpoint dict alongside metadata. Weights file: `final-20260317.pt` (224MB).
+1. **Backbone**: SpeciesNet's EfficientNet V2 M classifier (v4.0.2a, the "always-crop" variant), converted from ONNX to PyTorch via `onnx2torch`. This is the frozen feature extractor — it outputs a flat 2498-dimensional feature vector (the onnx2torch conversion includes global average pooling within the backbone). Weights file: `always_crop_99710272_22x8_v12_epoch_00148.pt` (224MB).
+2. **Head**: A single `nn.Linear(2498, 15)` layer fine-tuned on Hawaiian camera trap data. The head input size (2498) is read from the checkpoint's trained weights at load time. Stored in a checkpoint dict alongside metadata. Weights file: `final-20260317.pt` (224MB).
 
 The backbone expects NHWC input layout (from its TensorFlow/ONNX origin). Our forward pass converts from PyTorch's native NCHW format.
 
@@ -50,7 +50,7 @@ Raw logits are converted to probabilities via `F.softmax(output, dim=1)`. This i
 
 Source: [`FXClassifier` class in AddaxAI classify_detections.py, lines 72-130](https://github.com/PetervanLunteren/AddaxAI/blob/main/classification_utils/model_types/addax-sppnet/classify_detections.py)
 
-The wrapper class and backbone loading function are adapted from the AddaxAI reference, simplified for our single known backbone (EfficientNet V2 M, 1280-dim output, NHWC layout, 4D feature map output).
+The wrapper class and backbone loading function are adapted from the AddaxAI reference, simplified for our single known backbone. The backbone outputs a flat 2D tensor `[batch, 2498]` (the onnx2torch conversion bakes global average pooling into the backbone), so we use a simple `flatten(1)` rather than the generic ndim branching in the original code. The head input size is read from the checkpoint's `head.weight` shape at load time rather than hardcoded.
 
 ### Backbone identity: EfficientNet V2 M
 
@@ -121,7 +121,7 @@ Unlike the NZI-ADS-v1 model (a single YOLOv8 `.pt` file), this model has two fil
 
 ### Why does the AddaxAI example try two different backbone files?
 
-The example code tries `always_crop_...pt` first, then falls back to `full_image_...pt`. These are SpeciesNet's two classifier variants (v4.0.2a and v4.0.2b). Since the HuggingFace repo for HWI-ADS-v1 only includes the `always_crop` backbone, we don't need the fallback logic. This is also why we simplified the `FXClassifier` class — the generic version handled multiple backbone output shapes and layouts, but we hardcoded for EfficientNet V2 M since that's the only backbone shipped with this model.
+The example code tries `always_crop_...pt` first, then falls back to `full_image_...pt`. These are SpeciesNet's two classifier variants (v4.0.2a and v4.0.2b). Since the HuggingFace repo for HWI-ADS-v1 only includes the `always_crop` backbone, we don't need the fallback logic. We also simplified the `FXClassifier` class — the generic version used a dummy input trick to determine the backbone output size and had ndim branching for different output shapes. We instead read `in_features` from the checkpoint's `head.weight` shape (2498) and use a simple `flatten(1)` since we confirmed at runtime that the backbone outputs a flat 2D tensor.
 
 ### Why is there a Windows path compatibility hack?
 
