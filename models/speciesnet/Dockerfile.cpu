@@ -3,7 +3,7 @@
 ARG PYTHON_VERSION=3.11
 FROM python:$PYTHON_VERSION-slim
 
-RUN apt-get update && apt-get install -y git libgl1-mesa-glx libglib2.0-0
+RUN apt-get update && apt-get install -y git libgl1 libglx-mesa0 libglib2.0-0
 
 # Install all dependencies first
 RUN pip install --upgrade pip setuptools wheel
