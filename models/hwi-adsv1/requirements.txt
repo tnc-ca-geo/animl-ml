@@ -1,0 +1,7 @@
+torch==2.0.1
+torchvision==0.15.2
+onnx2torch==1.5.15
+pillow==10.4.0
+fastapi==0.115.0
+uvicorn==0.30.6
+huggingface-hub==0.25.1
