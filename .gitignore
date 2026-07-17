@@ -167,3 +167,6 @@ model_states/
 
 # predictions 
 *predictions/
+
+# Agents
+.amazonq/

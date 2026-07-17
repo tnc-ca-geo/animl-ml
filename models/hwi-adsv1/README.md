@@ -9,7 +9,7 @@ This handler serves the HWI-ADS-v1 (Hawaiian Wildlife Invasives) model for infer
 - **Model**: Hawaiian Wildlife Invasives v1
 - **Framework**: PyTorch (SpeciesNet EfficientNet V2 M backbone + fine-tuned linear head)
 - **Input**: 480x480 RGB images (cropped to detection, then resized)
-- **Classes**: 15 (see taxon-mapping.csv)
+- **Classes**: 15 (see taxon-mapping.csv in HuggingFace repo)
 - **Developer**: Addax Data Science
 - **Owner**: USDA Forest Service – Pacific Southwest Research Station, Institute of Pacific Islands Forestry (IPIF) & The Nature Conservancy (TNC)
 - **License**: CC BY-NC 4.0
@@ -59,16 +59,19 @@ Source: [SpeciesNet README](https://github.com/google/cameratrapai) — "trained
 ## Docker Build and Run
 
 ### Build the Docker image
+
 ```bash
 docker buildx build --platform linux/amd64 -t hwi-adsv1 .
 ```
 
 ### Run locally
+
 ```bash
 docker run -p 8080:8080 hwi-adsv1
 ```
 
 ### Test the endpoint
+
 ```bash
 # Health check
 curl http://localhost:8080/ping
@@ -85,6 +88,7 @@ curl -X POST http://localhost:8080/invocations \
 ## Request Format
 
 The handler expects a JSON payload with:
+
 - `image`: Base64-encoded image string
 - `bbox`: Bounding box in [x, y, width, height] format (normalized 0-1)
 
@@ -133,7 +137,7 @@ The model was trained on simple tight crops (no padding, no squaring). Using a d
 
 ### Why no letterboxing?
 
-Same reasoning as the crop method. The training pipeline uses `transforms.Resize` which stretches the crop to 480x480 without preserving aspect ratio. Other Animl models (e.g., nzi-adsv1) use letterboxing because that's how *those* models were trained. Always match the training pipeline for preprocessing.
+Same reasoning as the crop method. The training pipeline uses `transforms.Resize` which stretches the crop to 480x480 without preserving aspect ratio. Other Animl models (e.g., nzi-adsv1) use letterboxing because that's how _those_ models were trained. Always match the training pipeline for preprocessing.
 
 ### Does the image get recompressed during processing?
 
