@@ -1,0 +1,6 @@
+torch==2.0.1
+torchvision==0.15.2
+pillow==10.4.0
+fastapi==0.115.0
+uvicorn==0.30.6
+timm==0.9.16
