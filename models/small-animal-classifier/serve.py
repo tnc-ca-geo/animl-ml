@@ -1,12 +1,18 @@
 """
 Small Animal Classifier model server.
 
+Credit to Dan Morris (https://github.com/agentmorris) for training and open
+sourcing this classifier.
+
 Classification model for small-animal camera traps (California Small Animals
 dataset and related). Operates on full frames — no bounding box crop.
 
 Architecture: timm model (eva02_large_patch14_448) rebuilt from a stripped
 inference checkpoint (.stripped.pt), as produced by the training repo at
 https://github.com/agentmorris/small-animal-classifier
+
+All line number references in this file refer to that repository at commit
+835e835 (v1.0 release tag).
 
 Preprocessing pipeline (matches src/transforms.py:ValTransform.__call__,
 lines 148-154):
