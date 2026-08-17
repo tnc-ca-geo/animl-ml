@@ -19,10 +19,6 @@ RUN pip install --no-cache-dir -r /opt/ml/requirements.txt \
 #   - small-animal-classifier.onnx          (ONNX exported model, ~1.1 GB)
 #   - small-animal-classifier-metadata.json  (preprocessing config, ~1 KB)
 #
-# Upload them with:
-#   aws s3 cp small-animal-classifier.onnx s3://animl-model-zoo/small-animal-classifier/small-animal-classifier.onnx
-#   aws s3 cp small-animal-classifier-metadata.json s3://animl-model-zoo/small-animal-classifier/small-animal-classifier-metadata.json
-#
 # For local testing, mount a directory containing these files as a volume:
 #   docker run -p 8080:8080 -v $(pwd)/model-weights:/opt/ml/model small-animal-classifier
 RUN mkdir -p /opt/ml/model /opt/ml/code /opt/ml/input /opt/ml/output
