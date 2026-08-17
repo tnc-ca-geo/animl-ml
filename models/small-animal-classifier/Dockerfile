@@ -2,7 +2,6 @@ FROM python:3.13-slim
 
 # System dependencies for Pillow
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    wget \
     libgl1 \
     libglib2.0-0 \
     && apt-get clean \
@@ -13,10 +12,19 @@ COPY requirements.txt /opt/ml/requirements.txt
 RUN pip install --no-cache-dir -r /opt/ml/requirements.txt \
     && find /usr/local/lib/python3.13/site-packages -name "*.pyc" -delete
 
-# Create directories and copy model files
-# NOTE: For local testing, mount model-weights/ as a volume.
-# For production, replace these lines with wget from your hosting location
-# (GitHub release, S3, etc.)
+# Create directories required by SageMaker
+# NOTE: Model artifacts are NOT baked into this image. They are downloaded by
+# SageMaker at endpoint startup from s3://animl-model-zoo/small-animal-classifier/
+# and mounted at /opt/ml/model/. The following files must exist in that S3 path:
+#   - small-animal-classifier.onnx          (ONNX exported model, ~1.1 GB)
+#   - small-animal-classifier-metadata.json  (preprocessing config, ~1 KB)
+#
+# Upload them with:
+#   aws s3 cp small-animal-classifier.onnx s3://animl-model-zoo/small-animal-classifier/small-animal-classifier.onnx
+#   aws s3 cp small-animal-classifier-metadata.json s3://animl-model-zoo/small-animal-classifier/small-animal-classifier-metadata.json
+#
+# For local testing, mount a directory containing these files as a volume:
+#   docker run -p 8080:8080 -v $(pwd)/model-weights:/opt/ml/model small-animal-classifier
 RUN mkdir -p /opt/ml/model /opt/ml/code /opt/ml/input /opt/ml/output
 
 # Copy model server code
