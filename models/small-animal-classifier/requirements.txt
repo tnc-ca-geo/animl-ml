@@ -1,5 +1,5 @@
 # small-animal-classifier — inference server dependencies
-# Python 3.11, linux/amd64 (SageMaker Serverless, CPU-only)
+# Python 3.13, linux/amd64 (SageMaker Serverless, CPU-only)
 
 # Web server
 fastapi==0.115.5
@@ -8,15 +8,6 @@ uvicorn==0.32.1
 # Image handling
 pillow==10.4.0
 
-# ML — CPU-only torch; no CUDA index needed for SageMaker Serverless
-torch==2.6.0
-torchvision==0.21.0
-
-# timm is required to rebuild the model architecture from the checkpoint's
-# model_name string (e.g. "eva02_large_patch14_448.mim_m38m_ft_in22k_in1k")
-timm==1.0.27
-
-# To onnx
-onnx==1.22.0
+# ML — ONNX Runtime for inference (replaces torch/timm)
 onnxruntime==1.28.0
-onnxscript==0.7.1
+numpy

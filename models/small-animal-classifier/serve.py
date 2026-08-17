@@ -1,30 +1,22 @@
 """
-Small Animal Classifier model server.
-
-Credit to Dan Morris (https://github.com/agentmorris) for training and open
-sourcing this classifier.
+Small Animal Classifier model server (ONNX Runtime).
 
 Classification model for small-animal camera traps (California Small Animals
 dataset and related). Operates on full frames — no bounding box crop.
 
-Architecture: timm model (eva02_large_patch14_448) rebuilt from a stripped
-inference checkpoint (.stripped.pt), as produced by the training repo at
-https://github.com/agentmorris/small-animal-classifier
-
-All line number references in this file refer to that repository at commit
-835e835 (v1.0 release tag).
+Architecture: EVA-02 Large (timm eva02_large_patch14_448), exported to ONNX
+from a stripped inference checkpoint (.stripped.pt) produced by the training
+repo at https://github.com/agentmorris/small-animal-classifier
 
 Preprocessing pipeline (matches src/transforms.py:ValTransform.__call__,
 lines 148-154):
   1. Banner crop  — strip the top/bottom info-bar fractions recorded in the
-                    checkpoint (default ~3% top, 3.5% bottom) to prevent the
+                    metadata (default ~3% top, 3.5% bottom) to prevent the
                     model from reading timestamps as a classification shortcut.
   2. Square resize — squash/stretch to img_size × img_size (default 448×448)
                     using BILINEAR interpolation, no aspect-ratio preservation.
-                    Camera faces down → no canonical orientation after banner
-                    removal, so squashing is fine.
-  3. ToTensor     — PIL uint8 [0,255] → float32 [0,1], shape (3, H, W)
-  4. Normalize    — ImageNet mean/std read from checkpoint
+  3. To float32   — [0,255] uint8 → [0,1] float32, shape (3, H, W)
+  4. Normalize    — ImageNet mean/std read from metadata JSON
 
 Ref: src/transforms.py lines 148-154 (ValTransform.__call__)
 Ref: src/run_inference.py lines 155-168 (load_model)
@@ -36,15 +28,12 @@ import os
 import time
 import logging
 import json
+import numpy as np
 from PIL import Image, ImageFile
 from fastapi import FastAPI, Request
 from fastapi.exceptions import HTTPException
 import uvicorn
-
-import torch
-import torch.nn.functional as F
-import timm
-import torchvision.transforms.functional as TF
+import onnxruntime as ort
 
 # Don't error on truncated images (common with camera trap photos)
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -63,43 +52,34 @@ logger = logging.getLogger(__name__)
 
 model_path = os.getenv(
     "MODEL_PATH",
-    "/opt/ml/model/eva02-20260630-llrd.best.e02-s053514.stripped.pt",
+    "/opt/ml/model/small-animal-classifier.onnx",
+)
+metadata_path = os.getenv(
+    "METADATA_PATH",
+    "/opt/ml/model/small-animal-classifier-metadata.json",
 )
 
 try:
     start_time = time.time()
-    logger.info(f"Loading model from {model_path}")
+    logger.info(f"Loading metadata from {metadata_path}")
 
-    # Load the stripped inference checkpoint.
-    # weights_only=False is required because the checkpoint contains Python
-    # objects beyond bare tensors (model_name string, classes list, etc.).
-    # Ref: src/run_inference.py:155-157 (load_model)
-    ck = torch.load(model_path, map_location="cpu", weights_only=False)
+    with open(metadata_path) as f:
+        metadata = json.load(f)
 
-    # Rebuild the timm model from the architecture name and class count
-    # stored in the checkpoint, then load the stripped state dict.
-    # Ref: src/run_inference.py:158-162 (load_model)
-    model = timm.create_model(
-        ck["model_name"],
-        pretrained=False,
-        num_classes=ck["num_classes"],
-    )
-    model.load_state_dict(ck["state_dict"])
-    model.eval()
+    class_names = metadata["classes"]
+    img_size = metadata["img_size"]
+    norm_mean = np.array(metadata["norm_mean"], dtype=np.float32)
+    norm_std = np.array(metadata["norm_std"], dtype=np.float32)
+    banner_top = metadata["banner_crop"]["top"]
+    banner_bot = metadata["banner_crop"]["bottom"]
 
-    # Pull all inference-time metadata out of the checkpoint so we don't
-    # need to re-read it on every request.
-    class_names = ck["classes"]           # list[str], len == num_classes
-    img_size = ck["img_size"]             # int, square input side (e.g. 448)
-    norm_mean = tuple(ck["norm_mean"])    # (R, G, B) mean for normalize
-    norm_std = tuple(ck["norm_std"])      # (R, G, B) std  for normalize
-    banner_top = ck["banner_crop"]["top"]     # fraction of height to remove from top
-    banner_bot = ck["banner_crop"]["bottom"]  # fraction of height to remove from bottom
+    logger.info(f"Loading ONNX model from {model_path}")
+    session = ort.InferenceSession(model_path)
 
     load_time = time.time() - start_time
     logger.info(
         f"Model loaded in {load_time:.2f}s — "
-        f"arch={ck['model_name']}, classes={len(class_names)}, img_size={img_size}"
+        f"classes={len(class_names)}, img_size={img_size}"
     )
 
 except Exception as e:
@@ -108,33 +88,24 @@ except Exception as e:
 
 
 # =============================================================================
-# FastAPI Server
+# Preprocessing
 # =============================================================================
 
-app = FastAPI()
-
-
-@app.get("/ping")
-async def ping():
-    """Health check. If model load failed, the container already crashed."""
-    return {"status": "Healthy"}
-
-
-def preprocess(image: Image.Image) -> torch.Tensor:
+def preprocess(image: Image.Image) -> np.ndarray:
     """
     Apply the validation preprocessing pipeline from the training repo.
 
     Steps match src/transforms.py:ValTransform.__call__ (lines 148-154):
       1. Banner crop  — remove top/bottom info-bar fractions
       2. Square resize — squash to img_size × img_size with BILINEAR
-      3. ToTensor     — [0,255] uint8 → [0,1] float32, (3, H, W)
-      4. Normalize    — ImageNet mean/std from checkpoint
+      3. To float32   — [0,255] uint8 → [0,1] float32, (3, H, W)
+      4. Normalize    — ImageNet mean/std from metadata
 
     Args:
         image: Full-resolution PIL Image in RGB mode.
 
     Returns:
-        Preprocessed tensor of shape (3, img_size, img_size).
+        Preprocessed numpy array of shape (1, 3, img_size, img_size).
     """
     # Step 1: Banner crop
     # Remove the top and bottom fractions that typically contain the camera's
@@ -152,15 +123,42 @@ def preprocess(image: Image.Image) -> torch.Tensor:
     # Ref: src/transforms.py:151 (ValTransform.__call__)
     image = image.resize((img_size, img_size), Image.BILINEAR)
 
-    # Step 3: PIL → float32 tensor [0, 1], shape (3, H, W)
+    # Step 3: PIL → float32 array [0, 1], shape (H, W, 3)
+    # Equivalent to torchvision.transforms.functional.to_tensor
     # Ref: src/transforms.py:152 (ValTransform.__call__)
-    t = TF.to_tensor(image)
+    arr = np.array(image, dtype=np.float32) / 255.0
 
-    # Step 4: Normalize with mean/std from checkpoint (ImageNet stats)
+    # Step 4: Normalize with mean/std from metadata (ImageNet stats)
+    # Equivalent to torchvision.transforms.functional.normalize
     # Ref: src/transforms.py:153 (ValTransform.__call__)
-    t = TF.normalize(t, mean=norm_mean, std=norm_std)
+    arr = (arr - norm_mean) / norm_std
 
-    return t
+    # HWC → CHW (same as to_tensor's channel reordering)
+    arr = arr.transpose(2, 0, 1)
+
+    # Add batch dimension → (1, 3, H, W)
+    arr = np.expand_dims(arr, axis=0)
+
+    return arr
+
+
+def softmax(x: np.ndarray) -> np.ndarray:
+    """Numerically stable softmax along last axis."""
+    e = np.exp(x - x.max(axis=-1, keepdims=True))
+    return e / e.sum(axis=-1, keepdims=True)
+
+
+# =============================================================================
+# FastAPI Server
+# =============================================================================
+
+app = FastAPI()
+
+
+@app.get("/ping")
+async def ping():
+    """Health check. If model load failed, the container already crashed."""
+    return {"status": "Healthy"}
 
 
 @app.post("/invocations")
@@ -170,7 +168,7 @@ async def invoke(request: Request):
 
     This model operates on the full frame (no bbox crop). The preprocessing
     pipeline strips the camera info-banner and squashes to a square before
-    running the timm model.
+    running the model.
 
     Args:
         request: JSON body with:
@@ -189,20 +187,19 @@ async def invoke(request: Request):
         if image.mode != "RGB":
             image = image.convert("RGB")
 
-        # Preprocess: banner crop → square resize → tensor → normalize
-        input_tensor = preprocess(image)
-        input_batch = input_tensor.unsqueeze(0)  # (3, H, W) → (1, 3, H, W)
+        # Preprocess: banner crop → square resize → float32 → normalize
+        input_arr = preprocess(image)
 
-        # Forward pass.
-        # logits.float() ensures fp32 softmax regardless of input dtype.
+        # Forward pass
+        # logits.float() equivalent: ensure fp32 for softmax precision
+        logits = session.run(None, {"input": input_arr})[0].astype(np.float32)
+
+        # Postprocessing: softmax over all classes
         # Ref: src/run_inference.py:248-249 (infer)
-        with torch.no_grad():
-            logits = model(input_batch)
-        probs = torch.softmax(logits.float(), dim=1).cpu()
+        probs = softmax(logits)[0]
 
         # Format as {class_name: confidence} for all classes
-        scores = probs[0].tolist()
-        predictions = {class_names[i]: scores[i] for i in range(len(scores))}
+        predictions = {class_names[i]: float(probs[i]) for i in range(len(probs))}
 
         total_time = time.time() - request_start
         logger.info(f"Request completed in {total_time:.3f}s — {len(predictions)} classes")
