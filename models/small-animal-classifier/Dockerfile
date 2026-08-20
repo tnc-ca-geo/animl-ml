@@ -14,8 +14,9 @@ RUN pip install --no-cache-dir -r /opt/ml/requirements.txt \
 
 # Create directories required by SageMaker
 # NOTE: Model artifacts are NOT baked into this image. They are downloaded by
-# SageMaker at endpoint startup from s3://animl-model-zoo/small-animal-classifier/
-# and mounted at /opt/ml/model/. The following files must exist as part of a zip file# in that S3 path:
+# SageMaker at endpoint startup from s3 and mounted at /opt/ml/model/. 
+# Note that SageMaker handles this automatically so there is no manual mounting step.
+# The following files must exist as part of a zip file in that S3 path:
 #   - small-animal-classifier.onnx          (ONNX exported model)
 #   - small-animal-classifier.onnx.data     (ONNX exported model weights)
 #   - small-animal-classifier-metadata.json  (preprocessing config)
