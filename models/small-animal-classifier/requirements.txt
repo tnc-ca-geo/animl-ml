@@ -1,0 +1,13 @@
+# small-animal-classifier — inference server dependencies
+# Python 3.13, linux/amd64 (SageMaker Serverless, CPU-only)
+
+# Web server
+fastapi==0.115.5
+uvicorn==0.32.1
+
+# Image handling
+pillow==10.4.0
+
+# ML — ONNX Runtime for inference (replaces torch/timm)
+onnxruntime==1.28.0
+numpy
